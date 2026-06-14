@@ -10,578 +10,1023 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        nunito: ['Nunito', 'sans-serif'],
-                    },
+                    fontFamily: { nunito: ['Nunito', 'sans-serif'] },
                     colors: {
-                        'sp-blue': '#87CEEB',
-                        'sp-green': '#98FB98',
-                        'sp-yellow': '#FFFACD',
-                        'sp-pink': '#FFB6C1',
-                        'sp-purple': '#DDA0DD',
-                        'sp-orange': '#FFDAB9'
+                        'sp-blue': '#87CEEB', 'sp-green': '#98FB98',
+                        'sp-yellow': '#FFFACD', 'sp-pink': '#FFB6C1',
+                        'sp-purple': '#DDA0DD', 'sp-orange': '#FFDAB9'
                     },
                     animation: {
                         'bounce-slow': 'bounce 2s infinite',
                         'pulse-fast': 'pulse 1s infinite',
                         'wiggle': 'wiggle 1s ease-in-out infinite',
                         'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'float': 'float 3s ease-in-out infinite',
                     },
                     keyframes: {
-                        wiggle: {
-                            '0%, 100%': { transform: 'rotate(-5deg)' },
-                            '50%': { transform: 'rotate(5deg)' },
-                        },
-                        pop: {
-                            '0%': { transform: 'scale(0.8)', opacity: '0' },
-                            '100%': { transform: 'scale(1)', opacity: '1' },
-                        }
+                        wiggle: { '0%, 100%': { transform: 'rotate(-5deg)' }, '50%': { transform: 'rotate(5deg)' } },
+                        pop: { '0%': { transform: 'scale(0.8)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } }
                     }
                 }
             }
         }
     </script>
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: 'Nunito', sans-serif;
-            background-color: #f0f8ff;
-            user-select: none; /* Prevent text selection */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation; /* Prevent double-tap zoom */
+            touch-action: manipulation;
             overflow: hidden;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         .glass-panel {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 4px solid white;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            border: 3px solid rgba(255,255,255,0.9);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
         }
         .btn-game {
-            transition: all 0.2s ease;
-            box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+            transition: all 0.15s ease;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.18);
         }
-        .btn-game:active {
-            transform: translateY(6px);
-            box-shadow: 0 0 0 rgba(0,0,0,0.15);
-        }
+        .btn-game:active { transform: translateY(5px); box-shadow: 0 1px 0 rgba(0,0,0,0.18); }
+        .selected-item { box-shadow: 0 0 0 5px #FFD700, 0 0 20px rgba(255,215,0,0.5); transform: scale(1.12); }
         .star-particle {
             position: absolute;
             font-size: 2rem;
-            animation: fall 2s linear forwards;
+            animation: fall 2.5s linear forwards;
             pointer-events: none;
-            z-index: 50;
+            z-index: 60;
         }
         @keyframes fall {
-            0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+            0% { transform: translateY(-60px) rotate(0deg) scale(1); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(540deg) scale(0.3); opacity: 0; }
         }
-        .shake {
-            animation: shake 0.5s;
-        }
+        .shake { animation: shake 0.5s; }
         @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            50% { transform: translateX(10px); }
-            75% { transform: translateX(-10px); }
-            100% { transform: translateX(0); }
+            0%,100% { transform: translateX(0); }
+            20% { transform: translateX(-8px) rotate(-2deg); }
+            40% { transform: translateX(8px) rotate(2deg); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
         }
-        .selected-item {
-            box-shadow: 0 0 0 6px #FFD700;
-            transform: scale(1.1);
-        }
+        .solved-item { opacity: 0.35; pointer-events: none; transform: scale(0.8); }
+        .world-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .world-card:active { transform: scale(0.97); }
+        .avatar-btn { transition: all 0.2s; border: 4px solid transparent; }
+        .avatar-btn.chosen { border-color: #FFD700; box-shadow: 0 0 12px rgba(255,215,0,0.6); transform: scale(1.1); }
+        .sticker-badge { transition: transform 0.3s; }
+        .sticker-badge:hover { transform: scale(1.2) rotate(-5deg); }
+        .progress-bar-fill { transition: width 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .modal-overlay { backdrop-filter: blur(4px); }
+        .cloud-drift { animation: cloudDrift 8s ease-in-out infinite; }
+        @keyframes cloudDrift { 0%,100% { transform: translateX(0); } 50% { transform: translateX(10px); } }
+        .nav-tab { transition: all 0.2s; border-bottom: 3px solid transparent; }
+        .nav-tab.active { border-bottom-color: #3B82F6; color: #3B82F6; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 2px; }
+        .discipline-clock { transition: all 0.3s; }
+        .clock-hand { transform-origin: 50% 100%; transition: transform 0.5s; }
+        .care-friend { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .care-friend.helped { transform: scale(1.2); filter: brightness(1.2); }
+        .tooltip { position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 99; }
+        .has-tooltip:hover .tooltip { opacity: 1; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .slide-up { animation: slideUp 0.4s ease forwards; }
     </style>
 </head>
-<body class="w-full h-screen flex justify-center items-center">
-
-    <!-- Main Container -->
-    <div id="app" class="relative w-full max-w-md h-full sm:h-[85vh] sm:rounded-3xl shadow-2xl bg-gradient-to-b from-sp-blue to-white overflow-hidden flex flex-col">
-        <!-- Dynamic Content Injected Here -->
-    </div>
-
-    <script>
-        // Game State
-        const state = {
-            currentScreen: 'menu', // menu, map, play, reward, dashboard
-            currentWorld: null,
-            progress: {
-                honesty: { stars: 0, unlocked: true },
-                discipline: { stars: 0, unlocked: false },
-                responsibility: { stars: 0, unlocked: false },
-                care: { stars: 0, unlocked: false },
-                cooperation: { stars: 0, unlocked: false }
-            },
-            totalStars: 0
-        };
-
-        // World Definitions
-        const worlds = [
-            { id: 'honesty', name: 'Hutan Kejujuran', color: 'bg-sp-green', icon: '🐻', lockedMsg: 'Selesaikan sebelumnya!', desc: 'Kembalikan barang ke pemiliknya.' },
-            { id: 'responsibility', name: 'Pulau Tanggung Jawab', color: 'bg-sp-orange', icon: '🧸', lockedMsg: 'Dapatkan 1 bintang di Hutan Kejujuran', desc: 'Bereskan mainan yang berserakan.' },
-            { id: 'discipline', name: 'Kota Disiplin', color: 'bg-sp-blue', icon: '⏱️', lockedMsg: 'Segera Hadir!', desc: 'Datang tepat waktu ke sekolah.' },
-            { id: 'care', name: 'Taman Kepedulian', color: 'bg-sp-pink', icon: '💖', lockedMsg: 'Segera Hadir!', desc: 'Bantu teman yang kesulitan.' },
-            { id: 'cooperation', name: 'Desa Kerja Sama', color: 'bg-sp-purple', icon: '🤝', lockedMsg: 'Segera Hadir!', desc: 'Selesaikan misi bersama-sama.' }
-        ];
-
-        // Audio System
-        let audioCtx;
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
+<body class="w-full">
+ 
+<div id="app" class="relative w-full max-w-sm h-[100dvh] sm:h-[90vh] sm:rounded-3xl shadow-2xl bg-gradient-to-b from-sky-300 to-white overflow-hidden flex flex-col"></div>
+ 
+<script>
+// ===================== STATE =====================
+const state = {
+    currentScreen: 'splash',
+    currentWorld: null,
+    profile: { name: '', avatar: '🦁', created: false },
+    musicOn: true,
+    progress: {
+        honesty:        { stars: 0, unlocked: true,  playCount: 0 },
+        responsibility: { stars: 0, unlocked: false, playCount: 0 },
+        discipline:     { stars: 0, unlocked: false, playCount: 0 },
+        care:           { stars: 0, unlocked: false, playCount: 0 },
+        cooperation:    { stars: 0, unlocked: false, playCount: 0 }
+    },
+    stickers: [],
+    totalStars: 0,
+    streak: { count: 0, lastDate: null }
+};
+ 
+const worlds = [
+    { id: 'honesty',        name: 'Hutan Kejujuran',         color: 'bg-emerald-400',  bg: 'from-emerald-300 to-emerald-100', textColor: 'text-emerald-900', icon: '🐻', desc: 'Kembalikan barang ke pemiliknya.' },
+    { id: 'responsibility', name: 'Pulau Tanggung Jawab',    color: 'bg-orange-400',   bg: 'from-orange-300 to-orange-100', textColor: 'text-orange-900', icon: '🧸', desc: 'Bereskan mainan yang berserakan.' },
+    { id: 'discipline',     name: 'Kota Disiplin',           color: 'bg-sky-400',      bg: 'from-sky-300 to-sky-100', textColor: 'text-sky-900', icon: '⏰', desc: 'Susun jadwal harian dengan benar.' },
+    { id: 'care',           name: 'Taman Kepedulian',        color: 'bg-pink-400',     bg: 'from-pink-300 to-pink-100', textColor: 'text-pink-900', icon: '💖', desc: 'Bantu teman yang kesulitan.' },
+    { id: 'cooperation',    name: 'Desa Kerja Sama',         color: 'bg-purple-400',   bg: 'from-purple-300 to-purple-100', textColor: 'text-purple-900', icon: '🤝', desc: 'Pilih tindakan yang tepat bersama!' }
+];
+ 
+const avatarList = ['🦁','🐼','🐸','🦊','🐬','🦋','🐧','🐨'];
+const stickerRewards = [
+    { id: 's1', icon: '🌟', name: 'Bintang Pertama',  condition: () => state.totalStars >= 1 },
+    { id: 's2', icon: '🏅', name: 'Pahlawan Jujur',   condition: () => state.progress.honesty.stars >= 3 },
+    { id: 's3', icon: '🧹', name: 'Rapi Banget',      condition: () => state.progress.responsibility.stars >= 3 },
+    { id: 's4', icon: '⏰', name: 'Tepat Waktu',      condition: () => state.progress.discipline.stars >= 3 },
+    { id: 's5', icon: '💖', name: 'Hati Mulia',       condition: () => state.progress.care.stars >= 3 },
+    { id: 's6', icon: '🤝', name: 'Tim Hebat',        condition: () => state.progress.cooperation.stars >= 3 },
+    { id: 's7', icon: '🏆', name: 'Juara Lengkap',    condition: () => state.totalStars >= 15 },
+];
+ 
+// ===================== AUDIO =====================
+let audioCtx, bgOscNodes = [];
+let musicPlaying = false;
+ 
+function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+ 
+function playSound(type) {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    if (type === 'success') {
+        osc.type = 'sine';
+        [[523.25,0],[659.25,0.1],[783.99,0.2],[1046.5,0.35]].forEach(([f,t]) => osc.frequency.setValueAtTime(f, now+t));
+        gain.gain.setValueAtTime(0,now); gain.gain.linearRampToValueAtTime(0.4,now+0.05); gain.gain.exponentialRampToValueAtTime(0.01,now+0.7);
+        osc.start(now); osc.stop(now+0.7);
+    } else if (type === 'pop') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(400,now); osc.frequency.exponentialRampToValueAtTime(800,now+0.12);
+        gain.gain.setValueAtTime(0.25,now); gain.gain.exponentialRampToValueAtTime(0.01,now+0.12);
+        osc.start(now); osc.stop(now+0.12);
+    } else if (type === 'error') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320,now); osc.frequency.linearRampToValueAtTime(200,now+0.25);
+        gain.gain.setValueAtTime(0.25,now); gain.gain.exponentialRampToValueAtTime(0.01,now+0.3);
+        osc.start(now); osc.stop(now+0.3);
+    } else if (type === 'coin') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880,now); osc.frequency.setValueAtTime(1320,now+0.05);
+        gain.gain.setValueAtTime(0.3,now); gain.gain.exponentialRampToValueAtTime(0.01,now+0.2);
+        osc.start(now); osc.stop(now+0.2);
+    }
+}
+ 
+function startBgMusic() {
+    if (!audioCtx || musicPlaying || !state.musicOn) return;
+    musicPlaying = true;
+    const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
+    const melody = [0, 2, 4, 2, 0, 4, 2, 0];
+    let i = 0;
+    function playNote() {
+        if (!musicPlaying || !state.musicOn) return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.type = 'sine';
+        o.frequency.value = notes[melody[i % melody.length]] * 0.5;
+        const t = audioCtx.currentTime;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.06,t+0.05); g.gain.exponentialRampToValueAtTime(0.01,t+0.7);
+        o.start(t); o.stop(t+0.7);
+        i++;
+        bgOscNodes.push(setTimeout(playNote, 700));
+    }
+    playNote();
+}
+ 
+function stopBgMusic() {
+    musicPlaying = false;
+    bgOscNodes.forEach(t => clearTimeout(t));
+    bgOscNodes = [];
+}
+ 
+function speak(text, rate = 0.9) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'id-ID'; utt.pitch = 1.2; utt.rate = rate;
+    window.speechSynthesis.speak(utt);
+}
+ 
+// ===================== UTILS =====================
+const app = document.getElementById('app');
+ 
+function changeScreen(screen, arg = null) {
+    initAudio();
+    playSound('pop');
+    state.currentScreen = screen;
+    if (arg) state.currentWorld = arg;
+    render();
+}
+ 
+function createConfetti() {
+    const emojis = ['⭐','🌟','✨','🎉','🎊','💫','🌈'];
+    for (let i = 0; i < 25; i++) {
+        const el = document.createElement('div');
+        el.innerText = emojis[Math.floor(Math.random()*emojis.length)];
+        el.className = 'star-particle';
+        el.style.left = Math.random()*100 + '%';
+        el.style.animationDuration = (Math.random()*1.5 + 1.5) + 's';
+        el.style.animationDelay = (Math.random()*0.5) + 's';
+        el.style.fontSize = (Math.random()*1.2 + 1) + 'rem';
+        app.appendChild(el);
+        setTimeout(() => el.remove(), 3500);
+    }
+}
+ 
+function checkStickers() {
+    stickerRewards.forEach(s => {
+        if (!state.stickers.includes(s.id) && s.condition()) {
+            state.stickers.push(s.id);
+            showStickerToast(s);
         }
-
-        function playSound(type) {
-            if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            const now = audioCtx.currentTime;
-            
-            if (type === 'success') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(523.25, now); // C5
-                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
-                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
-                gainNode.gain.setValueAtTime(0, now);
-                gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-                osc.start(now);
-                osc.stop(now + 0.5);
-            } else if (type === 'pop') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(400, now);
-                osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
-                gainNode.gain.setValueAtTime(0.3, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
-            } else if (type === 'error') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(300, now);
-                osc.frequency.linearRampToValueAtTime(250, now + 0.2);
-                gainNode.gain.setValueAtTime(0.3, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                osc.start(now);
-                osc.stop(now + 0.3);
-            }
-        }
-
-        // Voice Narration
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // Stop current speaking
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'id-ID';
-                utterance.pitch = 1.3; // Cute voice
-                utterance.rate = 0.9;  // Slightly slower for kids
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        // Particle Effects
-        function createConfetti() {
-            const app = document.getElementById('app');
-            const emojis = ['⭐', '🌟', '✨', '🎉'];
-            for (let i = 0; i < 20; i++) {
-                const el = document.createElement('div');
-                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-                el.className = 'star-particle';
-                el.style.left = Math.random() * 100 + '%';
-                el.style.animationDuration = (Math.random() * 1 + 1.5) + 's';
-                app.appendChild(el);
-                setTimeout(() => el.remove(), 3000);
-            }
-        }
-
-        const app = document.getElementById('app');
-
-        function render() {
-            app.innerHTML = ''; // Clear current view
-            
-            switch(state.currentScreen) {
-                case 'menu': renderMenu(); break;
-                case 'map': renderMap(); break;
-                case 'play': renderLevel(); break;
-                case 'reward': renderReward(); break;
-                case 'dashboard': renderDashboard(); break;
-            }
-        }
-
-        function changeScreen(screen, arg = null) {
-            initAudio(); // Ensure audio is unlocked
-            state.currentScreen = screen;
-            if (arg) state.currentWorld = arg;
-            playSound('pop');
-            render();
-        }
-
-        function renderMenu() {
-            speak("Selamat datang di Sense Play Adventure! Ayo bermain bersama!");
-            
-            app.innerHTML = `
-                <div class="flex-1 flex flex-col items-center justify-center p-6 animate-pop relative">
-                    <!-- Clouds decoration -->
-                    <div class="absolute top-10 left-4 text-6xl opacity-80 animate-pulse-fast">☁️</div>
-                    <div class="absolute top-20 right-4 text-5xl opacity-80 animate-wiggle">☁️</div>
-
-                    <div class="text-7xl mb-4 animate-bounce-slow">🦁</div>
-                    <h1 class="text-4xl font-black text-center text-blue-600 mb-2 drop-shadow-md border-white">SensePlay<br>Adventure</h1>
-                    <p class="text-center text-gray-700 font-bold mb-8">Main sambil belajar jadi anak hebat!</p>
-                    
-                    <button onclick="changeScreen('map')" class="btn-game bg-green-400 text-white text-3xl font-black py-4 px-12 rounded-full border-4 border-white mb-6">
-                        MAIN! 🚀
-                    </button>
-                    
-                    <button onclick="changeScreen('dashboard')" class="bg-white/50 text-gray-600 font-bold py-2 px-6 rounded-full flex items-center gap-2 hover:bg-white/80 transition">
-                        <span>📊</span> Area Orang Tua
-                    </button>
+    });
+}
+ 
+function showStickerToast(sticker) {
+    const toast = document.createElement('div');
+    toast.className = 'absolute top-4 left-1/2 z-50 slide-up';
+    toast.style.transform = 'translateX(-50%)';
+    toast.innerHTML = `<div class="bg-yellow-400 text-yellow-900 font-black px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-sm border-2 border-yellow-200">
+        ${sticker.icon} Stiker Baru: ${sticker.name}!
+    </div>`;
+    app.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+ 
+function updateStreak() {
+    const today = new Date().toDateString();
+    if (state.streak.lastDate === today) return;
+    if (state.streak.lastDate === new Date(Date.now()-86400000).toDateString()) {
+        state.streak.count++;
+    } else {
+        state.streak.count = 1;
+    }
+    state.streak.lastDate = today;
+}
+ 
+// ===================== RENDER =====================
+function render() {
+    switch(state.currentScreen) {
+        case 'splash':     renderSplash(); break;
+        case 'profile':    renderProfile(); break;
+        case 'menu':       renderMenu(); break;
+        case 'map':        renderMap(); break;
+        case 'play':       renderLevel(); break;
+        case 'dashboard':  renderDashboard(); break;
+        case 'stickers':   renderStickers(); break;
+    }
+}
+ 
+// ===================== SPLASH =====================
+function renderSplash() {
+    app.innerHTML = `
+    <div class="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-sky-400 via-sky-300 to-white relative overflow-hidden">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute text-6xl opacity-70 cloud-drift" style="top:8%;left:5%">☁️</div>
+            <div class="absolute text-5xl opacity-60" style="top:15%;right:8%;animation:cloudDrift 10s ease-in-out infinite reverse">☁️</div>
+            <div class="absolute text-4xl opacity-50 cloud-drift" style="top:25%;left:50%;animation-delay:2s">☁️</div>
+        </div>
+        <div class="text-8xl mb-3 animate-bounce-slow">🦁</div>
+        <h1 class="text-4xl font-black text-white text-center drop-shadow-lg mb-1">SensePlay</h1>
+        <h2 class="text-2xl font-black text-yellow-300 text-center drop-shadow mb-3">Adventure</h2>
+        <p class="text-white/80 font-bold text-center mb-10 text-sm px-8">Belajar nilai baik lewat petualangan seru!</p>
+        <div class="flex gap-2 text-2xl mb-10">
+            <span class="animate-bounce" style="animation-delay:0s">⭐</span>
+            <span class="animate-bounce" style="animation-delay:0.15s">⭐</span>
+            <span class="animate-bounce" style="animation-delay:0.3s">⭐</span>
+        </div>
+        <button onclick="initAudio(); startBgMusic(); ${state.profile.created ? "changeScreen('menu')" : "changeScreen('profile')"}" 
+            class="btn-game bg-yellow-400 text-yellow-900 text-xl font-black py-4 px-14 rounded-full border-4 border-white shadow-xl">
+            ${state.profile.created ? `Halo ${state.profile.avatar} ${state.profile.name}! MAIN! 🚀` : 'MULAI PETUALANGAN! 🚀'}
+        </button>
+    </div>`;
+    speak(state.profile.created ? `Halo ${state.profile.name}! Selamat datang kembali!` : "Selamat datang di Sense Play Adventure! Ayo bermain bersama!");
+}
+ 
+// ===================== PROFILE SETUP =====================
+function renderProfile() {
+    let selectedAvatar = state.profile.avatar || '🦁';
+    app.innerHTML = `
+    <div class="flex-1 flex flex-col bg-gradient-to-b from-purple-300 to-white p-6 overflow-y-auto">
+        <h2 class="text-2xl font-black text-purple-800 text-center mb-6 mt-4">Siapa kamu? 👋</h2>
+        
+        <div class="glass-panel rounded-3xl p-5 mb-5 text-center">
+            <p class="font-bold text-gray-600 mb-3 text-sm">Pilih avatar favoritmu!</p>
+            <div class="grid grid-cols-4 gap-3" id="avatarGrid">
+                ${avatarList.map(av => `
+                    <button onclick="selectAvatar('${av}')" id="av-${av}" 
+                        class="avatar-btn text-3xl w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mx-auto ${av === selectedAvatar ? 'chosen' : ''}">
+                        ${av}
+                    </button>`).join('')}
+            </div>
+        </div>
+ 
+        <div class="glass-panel rounded-3xl p-5 mb-6">
+            <p class="font-bold text-gray-600 mb-2 text-sm">Nama panggilanmu?</p>
+            <input id="playerName" type="text" maxlength="12" placeholder="Tulis namamu..." 
+                value="${state.profile.name}"
+                class="w-full border-3 border-purple-300 rounded-2xl px-4 py-3 text-lg font-bold text-center focus:outline-none focus:border-purple-500 bg-white"
+                style="border-width:3px">
+        </div>
+ 
+        <button onclick="saveProfile()" 
+            class="btn-game bg-purple-500 text-white text-xl font-black py-4 rounded-full border-4 border-white shadow-xl">
+            Ayo Petualangan! 🚀
+        </button>
+    </div>`;
+    speak("Halo! Siapakah namamu? Pilih avatar favoritmu ya!");
+    
+    window.selectAvatar = function(av) {
+        selectedAvatar = av;
+        avatarList.forEach(a => {
+            const el = document.getElementById('av-'+a);
+            if (el) { el.classList.remove('chosen'); }
+        });
+        document.getElementById('av-'+av)?.classList.add('chosen');
+        playSound('pop');
+    };
+    
+    window.saveProfile = function() {
+        const nameEl = document.getElementById('playerName');
+        const name = nameEl ? nameEl.value.trim() : '';
+        if (!name) { nameEl?.classList.add('shake'); setTimeout(()=>nameEl?.classList.remove('shake'),500); speak("Tulis namamu dulu ya!"); return; }
+        state.profile.name = name;
+        state.profile.avatar = selectedAvatar;
+        state.profile.created = true;
+        playSound('success');
+        updateStreak();
+        changeScreen('menu');
+    };
+}
+ 
+// ===================== MENU =====================
+function renderMenu() {
+    startBgMusic();
+    const totalPossible = worlds.length * 3;
+    const pct = Math.round((state.totalStars / totalPossible) * 100);
+    app.innerHTML = `
+    <div class="flex-1 flex flex-col bg-gradient-to-b from-sky-300 to-white relative overflow-hidden">
+        <!-- Top bar -->
+        <div class="flex justify-between items-center px-4 pt-4 pb-2">
+            <div class="flex items-center gap-2">
+                <div class="text-3xl">${state.profile.avatar}</div>
+                <div>
+                    <p class="font-black text-sky-800 text-sm leading-none">${state.profile.name}</p>
+                    <p class="text-xs text-sky-600 font-bold">🔥 ${state.streak.count} hari berturut</p>
                 </div>
-            `;
-        }
-
-        function renderMap() {
-            speak("Pilih dunia yang ingin kamu kunjungi!");
-            
-            let html = `
-                <div class="p-6 h-full flex flex-col animate-pop">
-                    <div class="flex justify-between items-center mb-6">
-                        <button onclick="changeScreen('menu')" class="bg-white p-3 rounded-full shadow-md text-xl">🏠</button>
-                        <div class="bg-yellow-300 px-4 py-2 rounded-full font-black text-yellow-800 flex items-center gap-2 shadow-md">
-                            ⭐ ${state.totalStars}
-                        </div>
-                    </div>
-                    <h2 class="text-2xl font-black text-center text-blue-700 mb-6 bg-white/70 rounded-full py-2">Peta Petualangan 🗺️</h2>
-                    
-                    <div class="flex-1 overflow-y-auto space-y-4 pb-10">
-            `;
-
-            worlds.forEach(w => {
-                const isUnlocked = state.progress[w.id].unlocked;
-                const stars = state.progress[w.id].stars;
-                
-                html += `
-                    <div class="glass-panel p-4 rounded-3xl flex items-center gap-4 ${isUnlocked ? 'cursor-pointer hover:scale-105 transition-transform' : 'opacity-60 grayscale'}"
-                         onclick="if(${isUnlocked}) { ${w.id === 'honesty' || w.id === 'responsibility' ? `changeScreen('play', '${w.id}')` : `alertCustom('Dunia ini sedang dibangun! Mainkan dunia yang lain ya.')`} } else { alertCustom('${w.lockedMsg}') }">
-                        <div class="${w.color} w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-inner border-2 border-white">
-                            ${isUnlocked ? w.icon : '🔒'}
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-black text-gray-800 text-lg">${w.name}</h3>
-                            <p class="text-sm text-gray-600 leading-tight">${w.desc}</p>
-                            ${isUnlocked ? `<div class="text-yellow-500 mt-1">${'⭐'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-
-            html += `
-                    </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="state.musicOn=!state.musicOn; state.musicOn?startBgMusic():stopBgMusic(); this.textContent=state.musicOn?'🔊':'🔇'; playSound('pop')" 
+                    class="bg-white/60 rounded-full p-2 text-lg font-bold shadow-sm">${state.musicOn?'🔊':'🔇'}</button>
+                <div class="bg-yellow-300 px-3 py-1.5 rounded-full font-black text-yellow-800 text-sm shadow-md flex items-center gap-1">
+                    ⭐ ${state.totalStars}
                 </div>
-                
-                <!-- Custom Alert Overlay (Hidden by default) -->
-                <div id="customAlert" class="absolute inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-                    <div class="bg-white p-6 rounded-3xl max-w-[80%] text-center animate-pop">
-                        <p id="alertMsg" class="font-bold text-lg mb-4"></p>
-                        <button onclick="document.getElementById('customAlert').classList.add('hidden')" class="bg-blue-400 text-white font-bold py-2 px-6 rounded-full">Oke!</button>
-                    </div>
-                </div>
-            `;
+            </div>
+        </div>
+ 
+        <!-- Hero -->
+        <div class="flex flex-col items-center py-4 relative">
+            <div class="absolute top-0 left-4 text-5xl opacity-70 cloud-drift">☁️</div>
+            <div class="absolute top-6 right-4 text-4xl opacity-60" style="animation:cloudDrift 9s ease-in-out infinite reverse">☁️</div>
+            <div class="text-7xl mb-1 animate-float">${state.profile.avatar}</div>
+            <h1 class="text-2xl font-black text-sky-700 drop-shadow">SensePlay Adventure</h1>
+            <p class="text-sky-600 font-bold text-sm">Main sambil jadi anak hebat!</p>
             
-            app.innerHTML = html;
+            <!-- Overall Progress -->
+            <div class="mt-3 w-[80%] bg-white/60 rounded-full h-3 shadow-inner">
+                <div class="progress-bar-fill h-3 rounded-full bg-gradient-to-r from-yellow-400 to-green-400 shadow" style="width:${pct}%"></div>
+            </div>
+            <p class="text-xs text-sky-700 font-bold mt-1">${state.totalStars}/${totalPossible} Bintang ✨</p>
+        </div>
+ 
+        <!-- Buttons -->
+        <div class="flex flex-col items-center gap-3 px-6 pb-4">
+            <button onclick="changeScreen('map')" class="btn-game w-full bg-green-400 text-white text-xl font-black py-4 rounded-full border-4 border-white shadow-xl">
+                🗺️ Mulai Petualangan!
+            </button>
+            <div class="flex gap-3 w-full">
+                <button onclick="changeScreen('stickers')" class="btn-game flex-1 bg-yellow-400 text-yellow-900 font-black py-3 rounded-full border-3 border-white shadow-md text-sm" style="border-width:3px">
+                    🏅 Stiker (${state.stickers.length}/${stickerRewards.length})
+                </button>
+                <button onclick="changeScreen('dashboard')" class="btn-game flex-1 bg-blue-400 text-white font-black py-3 rounded-full border-3 border-white shadow-md text-sm" style="border-width:3px">
+                    📊 Laporan
+                </button>
+            </div>
+            <button onclick="changeScreen('profile')" class="text-sky-600 font-bold text-xs underline mt-1">
+                Ganti nama / avatar
+            </button>
+        </div>
+    </div>`;
+    speak(`Halo ${state.profile.name}! Mau petualangan apa hari ini?`);
+}
+ 
+// ===================== MAP =====================
+function renderMap() {
+    let html = `
+    <div class="p-4 h-full flex flex-col bg-gradient-to-b from-sky-200 to-white animate-pop">
+        <div class="flex justify-between items-center mb-4">
+            <button onclick="changeScreen('menu')" class="bg-white p-3 rounded-full shadow-md text-xl">🏠</button>
+            <h2 class="font-black text-sky-700 text-lg">Peta Petualangan 🗺️</h2>
+            <div class="bg-yellow-300 px-3 py-1.5 rounded-full font-black text-yellow-800 text-sm shadow flex items-center gap-1">⭐ ${state.totalStars}</div>
+        </div>
+        <div class="flex-1 overflow-y-auto space-y-3 pb-4">`;
+ 
+    worlds.forEach((w, idx) => {
+        const isUnlocked = state.progress[w.id].unlocked;
+        const stars = state.progress[w.id].stars;
+        const isPlayable = w.id !== 'cooperation';
+        html += `
+        <div class="world-card glass-panel p-4 rounded-3xl flex items-center gap-3 ${isUnlocked && isPlayable ? 'cursor-pointer' : 'opacity-60 grayscale'}"
+             onclick="${isUnlocked && isPlayable ? `changeScreen('play','${w.id}')` : isUnlocked ? `alertCustom('Dunia ini akan segera hadir! 🚧')` : `alertCustom('Selesaikan dunia sebelumnya dulu ya! 🔒')`}">
+            <div class="${w.color} w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner border-2 border-white flex-shrink-0">
+                ${isUnlocked ? w.icon : '🔒'}
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 class="font-black text-gray-800 text-base leading-tight">${w.name}</h3>
+                <p class="text-xs text-gray-500 leading-snug mt-0.5">${w.desc}</p>
+                ${isUnlocked ? `<div class="mt-1.5 text-lg">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>` : `<p class="text-xs text-gray-400 mt-1 font-bold">🔒 Terkunci</p>`}
+            </div>
+            ${isUnlocked && isPlayable ? `<div class="text-2xl flex-shrink-0">▶️</div>` : ''}
+        </div>`;
+    });
+ 
+    html += `</div></div>
+    <div id="customAlert" class="absolute inset-0 modal-overlay bg-black/40 hidden items-center justify-center z-50 flex">
+        <div class="bg-white p-6 rounded-3xl max-w-[80%] text-center animate-pop shadow-2xl border-4 border-white">
+            <div class="text-4xl mb-2" id="alertIcon">ℹ️</div>
+            <p id="alertMsg" class="font-bold text-lg mb-4"></p>
+            <button onclick="document.getElementById('customAlert').classList.add('hidden')" 
+                class="btn-game bg-blue-400 text-white font-black py-2 px-8 rounded-full">Oke!</button>
+        </div>
+    </div>`;
+    app.innerHTML = html;
+    speak("Pilih dunia yang ingin kamu kunjungi!");
+}
+ 
+window.alertCustom = function(msg, icon = 'ℹ️') {
+    document.getElementById('alertMsg').innerText = msg;
+    document.getElementById('alertIcon').innerText = icon;
+    document.getElementById('customAlert').classList.remove('hidden');
+    speak(msg);
+};
+ 
+// ===================== GAME ENGINE =====================
+let gameData = {};
+ 
+function renderLevel() {
+    const map = {
+        honesty: initHonestyGame,
+        responsibility: initResponsibilityGame,
+        discipline: initDisciplineGame,
+        care: initCareGame,
+        cooperation: initCoopGame
+    };
+    (map[state.currentWorld] || (() => changeScreen('map')))();
+}
+ 
+// ---- WIN LEVEL ----
+function winLevel(starsEarned, reflectionText) {
+    updateStreak();
+    const world = state.currentWorld;
+    const prog = state.progress[world];
+    if (prog.stars < starsEarned) {
+        state.totalStars += starsEarned - prog.stars;
+        prog.stars = starsEarned;
+    }
+    prog.playCount++;
+    const unlockMap = { honesty: 'responsibility', responsibility: 'discipline', discipline: 'care', care: 'cooperation' };
+    if (unlockMap[world]) state.progress[unlockMap[world]].unlocked = true;
+    
+    createConfetti();
+    playSound('success');
+    checkStickers();
+    
+    app.innerHTML = `
+    <div class="h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-yellow-200 to-amber-300 relative overflow-hidden animate-pop">
+        <div class="absolute inset-0 pointer-events-none overflow-hidden">
+            ${['10%','30%','50%','70%','90%'].map((l,i)=>`<div class="absolute text-4xl opacity-20" style="left:${l};top:${(i*18)+5}%;transform:rotate(${i*15}deg)">⭐</div>`).join('')}
+        </div>
+        <div class="text-8xl mb-3 animate-bounce">🏆</div>
+        <div class="flex gap-2 mb-4 text-5xl">
+            ${['0.1','0.3','0.5'].map((d,i) => i < starsEarned ? `<span class="animate-pop" style="animation-delay:${d}s">⭐</span>` : `<span class="opacity-30 text-4xl">☆</span>`).join('')}
+        </div>
+        <div class="glass-panel p-5 rounded-3xl text-center mb-6 w-full border-4 border-yellow-300">
+            <h2 class="text-xl font-black text-yellow-800 mb-2">🎉 Misi Selesai!</h2>
+            <p class="text-yellow-900 font-bold leading-relaxed text-sm">"${reflectionText}"</p>
+        </div>
+        <div class="flex gap-3 w-full">
+            <button onclick="changeScreen('play','${world}')" class="btn-game flex-1 bg-green-400 text-white font-black py-3 rounded-full border-3 border-white text-sm" style="border-width:3px">
+                🔁 Ulang
+            </button>
+            <button onclick="changeScreen('map')" class="btn-game flex-1 bg-blue-500 text-white font-black py-3 rounded-full border-3 border-white text-sm" style="border-width:3px">
+                Lanjut 🚀
+            </button>
+        </div>
+    </div>`;
+    speak(reflectionText);
+}
+ 
+// ===================== GAME 1: HUTAN KEJUJURAN =====================
+function initHonestyGame() {
+    speak("Hutan Kejujuran. Ketuk barang, lalu ketuk hewan pemiliknya!");
+    gameData = {
+        selectedItem: null, matchesLeft: 3,
+        items: [
+            { id: 'apple',    icon: '🍎', owner: 'bear',   name: 'Apel',    solved: false },
+            { id: 'bone',     icon: '🦴', owner: 'dog',    name: 'Tulang',  solved: false },
+            { id: 'carrot',   icon: '🥕', owner: 'rabbit', name: 'Wortel', solved: false }
+        ],
+        owners: [
+            { id: 'dog',    icon: '🐶', name: 'Anjing',  expects: 'bone',   solved: false },
+            { id: 'bear',   icon: '🐻', name: 'Beruang', expects: 'apple',  solved: false },
+            { id: 'rabbit', icon: '🐰', name: 'Kelinci', expects: 'carrot', solved: false }
+        ]
+    };
+    drawHonestyGame();
+}
+ 
+function drawHonestyGame() {
+    const w = worlds.find(x => x.id === 'honesty');
+    let html = `
+    <div class="p-4 h-full flex flex-col bg-gradient-to-b ${w.bg} animate-pop">
+        <div class="flex justify-between items-center mb-2">
+            <button onclick="changeScreen('map')" class="bg-white p-2.5 rounded-full shadow-md">🔙</button>
+            <h2 class="font-black ${w.textColor} bg-white/70 px-4 py-1 rounded-full text-base">Hutan Kejujuran 🌲</h2>
+            <div class="bg-white/60 px-3 py-1 rounded-full text-sm font-black text-emerald-800">${3 - gameData.matchesLeft}/3</div>
+        </div>
+        <p class="text-center font-bold ${w.textColor} mb-3 bg-white/50 p-2 rounded-xl text-sm">Bantu kembalikan barang ke pemiliknya!</p>
+        
+        <div class="flex justify-around items-end h-2/5 mb-3 pb-3 border-b-4 border-emerald-600/20">
+            ${gameData.owners.map(o => `
+            <div id="owner-${o.id}" class="text-center cursor-pointer transition-all duration-200 ${o.solved ? 'opacity-60' : ''}" onclick="handleOwnerTap('${o.id}')">
+                <div class="text-6xl mb-1 ${o.solved ? 'animate-bounce-slow' : 'animate-pulse-fast'}">${o.icon}</div>
+                <div class="bg-white/80 px-2 py-0.5 rounded-full font-bold text-xs shadow-sm">${o.solved ? '😊 Terima kasih!' : '😢 Sedih'}</div>
+                <div class="text-xs font-black ${w.textColor} mt-1">${o.name}</div>
+            </div>`).join('')}
+        </div>
+        
+        <p class="text-center text-xs font-bold ${w.textColor} mb-2">Barang yang ditemukan:</p>
+        <div class="flex justify-around items-center bg-white/40 rounded-3xl p-3 border-4 border-white gap-2">
+            ${gameData.items.map(i => `
+            <div id="item-${i.id}" class="btn-game bg-white w-20 h-20 rounded-2xl shadow-md flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ${i.solved ? 'solved-item' : ''} ${gameData.selectedItem === i.id ? 'selected-item' : ''}" 
+                 onclick="handleItemTap('${i.id}')">
+                <span class="text-4xl">${i.icon}</span>
+                <span class="text-xs font-bold text-gray-600 mt-0.5">${i.name}</span>
+            </div>`).join('')}
+        </div>
+        ${gameData.selectedItem ? `<p class="text-center text-xs font-black text-emerald-800 mt-2 animate-pulse-fast">▲ Sekarang ketuk siapa pemiliknya!</p>` : `<p class="text-center text-xs font-bold text-emerald-700 mt-2">Ketuk salah satu barang dulu</p>`}
+    </div>`;
+    app.innerHTML = html;
+}
+ 
+window.handleItemTap = function(itemId) {
+    const item = gameData.items.find(i => i.id === itemId);
+    if (item.solved) return;
+    gameData.selectedItem = itemId;
+    playSound('pop');
+    drawHonestyGame();
+    speak(`Kamu memilih ${item.name}. Punya siapa ya?`);
+};
+ 
+window.handleOwnerTap = function(ownerId) {
+    if (!gameData.selectedItem) { speak("Pilih barangnya dulu ya!"); return; }
+    const owner = gameData.owners.find(o => o.id === ownerId);
+    const item = gameData.items.find(i => i.id === gameData.selectedItem);
+    if (owner.solved) return;
+    if (owner.expects === gameData.selectedItem) {
+        playSound('success');
+        owner.solved = true;
+        item.solved = true;
+        gameData.selectedItem = null;
+        gameData.matchesLeft--;
+        speak(`Pintar! ${item.name} memang milik ${owner.name}!`);
+        drawHonestyGame();
+        if (gameData.matchesLeft === 0) {
+            setTimeout(() => winLevel(3, "Hebat! Kamu sudah menunjukkan kejujuran dengan mengembalikan barang milik orang lain. Anak jujur itu disayang semua orang!"), 1500);
         }
-
-        function alertCustom(msg) {
-            document.getElementById('alertMsg').innerText = msg;
-            document.getElementById('customAlert').classList.remove('hidden');
-            speak(msg);
-        }
-
-        let gameData = {};
-
-        function renderLevel() {
-            if (state.currentWorld === 'honesty') {
-                initHonestyGame();
-            } else if (state.currentWorld === 'responsibility') {
-                initResponsibilityGame();
-            }
-        }
-
-        function initHonestyGame() {
-            speak("Hutan Kejujuran. Ketuk barang yang hilang, lalu ketuk hewan pemiliknya!");
-            
-            gameData = {
-                selectedItem: null,
-                matchesLeft: 2,
-                items: [
-                    { id: 'apple', icon: '🍎', owner: 'bear', name: 'Apel' },
-                    { id: 'bone', icon: '🦴', owner: 'dog', name: 'Tulang' }
-                ],
-                owners: [
-                    { id: 'dog', icon: '🐶', name: 'Anjing', expects: 'bone', solved: false },
-                    { id: 'bear', icon: '🐻', name: 'Beruang', expects: 'apple', solved: false }
-                ]
-            };
-            
-            drawHonestyGame();
-        }
-
-        function drawHonestyGame() {
-            let html = `
-                <div class="p-4 h-full flex flex-col bg-sp-green animate-pop relative">
-                    <div class="flex justify-between items-center mb-2">
-                        <button onclick="changeScreen('map')" class="bg-white p-3 rounded-full shadow-md">🔙</button>
-                        <h2 class="font-black text-green-800 bg-white/70 px-4 py-1 rounded-full text-lg">Hutan Kejujuran 🌲</h2>
-                    </div>
-                    
-                    <p class="text-center font-bold text-green-900 mb-4 bg-white/50 p-2 rounded-xl">Bantu kembalikan barang ke pemiliknya!</p>
-
-                    <!-- Owners Area (Top) -->
-                    <div class="flex justify-around items-end h-1/3 mb-4 border-b-4 border-green-700/20 pb-4">
-            `;
-
-            gameData.owners.forEach((o, index) => {
-                html += `
-                    <div id="owner-${o.id}" class="text-center transition-all duration-300" onclick="handleOwnerTap('${o.id}')">
-                        <div class="text-7xl mb-2 ${o.solved ? 'animate-bounce-slow' : 'animate-pulse-fast'}">${o.icon}</div>
-                        <div class="bg-white/80 px-3 py-1 rounded-full font-bold text-sm shadow-sm flex items-center gap-1">
-                            ${o.solved ? o.icon : '❓'} ${o.solved ? 'Senang!' : 'Sedih'}
-                        </div>
-                    </div>
-                `;
-            });
-
-            html += `</div>
-                    <!-- Items Area (Bottom) -->
-                    <div class="flex justify-around items-center h-1/3 bg-white/40 rounded-3xl p-4 border-4 border-white dashed">
-            `;
-
-            gameData.items.forEach(i => {
-                html += `
-                    <div id="item-${i.id}" class="btn-game bg-white w-24 h-24 rounded-2xl shadow-md flex justify-center items-center text-6xl cursor-pointer ${gameData.selectedItem === i.id ? 'selected-item' : ''}" onclick="handleItemTap('${i.id}')">
-                        ${i.icon}
-                    </div>
-                `;
-            });
-
-            html += `</div></div>`;
-            app.innerHTML = html;
-        }
-
-        window.handleItemTap = function(itemId) {
-            if (gameData.items.find(i => i.id === itemId).solved) return;
-            gameData.selectedItem = itemId;
-            playSound('pop');
-            drawHonestyGame(); // Redraw to show selection
-            speak(`Kamu memilih ${gameData.items.find(i => i.id === itemId).name}. Punya siapa ini ya?`);
-        };
-
-        window.handleOwnerTap = function(ownerId) {
-            if (!gameData.selectedItem) {
-                speak("Pilih barangnya dulu ya!");
-                return;
-            }
-
-            const owner = gameData.owners.find(o => o.id === ownerId);
-            const item = gameData.items.find(i => i.id === gameData.selectedItem);
-
-            if (owner.expects === gameData.selectedItem) {
-                // Correct Match
-                playSound('success');
-                owner.solved = true;
-                owner.icon = owner.icon.replace('🐶', '🐕').replace('🐻', '🧸'); // Change appearance slightly if possible, or just animate
-                
-                // Remove item from array
-                gameData.items = gameData.items.filter(i => i.id !== gameData.selectedItem);
-                gameData.selectedItem = null;
-                gameData.matchesLeft--;
-                
-                speak(`Pintar! ${item.name} memang milik ${owner.name}. Kamu anak jujur!`);
-                drawHonestyGame();
-
-                if (gameData.matchesLeft === 0) {
-                    setTimeout(() => winLevel(3, "Hebat! Kamu sudah menunjukkan sikap jujur dengan mengembalikan barang milik orang lain."), 1500);
-                }
-            } else {
-                // Wrong Match - Gentle correction
-                playSound('error');
-                const ownerEl = document.getElementById(`owner-${ownerId}`);
-                ownerEl.classList.add('shake');
-                setTimeout(() => ownerEl.classList.remove('shake'), 500);
-                gameData.selectedItem = null;
-                drawHonestyGame();
-                speak(`Sepertinya ${item.name} bukan milik ${owner.name}. Yuk coba cari pemilik aslinya!`);
-            }
-        };
-
-        function initResponsibilityGame() {
-            speak("Pulau Tanggung Jawab. Ketuk mainan yang berserakan untuk merapikannya ke dalam kotak!");
-            
-            gameData = {
-                toysLeft: 3,
-                toys: [
-                    { id: 't1', icon: '🚗', top: '20%', left: '10%' },
-                    { id: 't2', icon: '⚽', top: '40%', left: '70%' },
-                    { id: 't3', icon: '🧸', top: '60%', left: '20%' }
-                ]
-            };
-            drawResponsibilityGame();
-        }
-
-        function drawResponsibilityGame() {
-            let html = `
-                <div class="p-4 h-full flex flex-col bg-sp-orange animate-pop relative overflow-hidden">
-                    <div class="flex justify-between items-center mb-2 relative z-10">
-                        <button onclick="changeScreen('map')" class="bg-white p-3 rounded-full shadow-md">🔙</button>
-                        <h2 class="font-black text-orange-900 bg-white/70 px-4 py-1 rounded-full text-lg">Tanggung Jawab 🧹</h2>
-                    </div>
-                    
-                    <p class="text-center font-bold text-orange-900 mb-4 bg-white/50 p-2 rounded-xl relative z-10">Bereskan mainan yang berserakan!</p>
-
-                    <!-- Toy Box -->
-                    <div id="toybox" class="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-8xl z-10">
-                        📦
-                    </div>
-            `;
-
-            gameData.toys.forEach(t => {
-                html += `
-                    <div id="${t.id}" class="absolute text-5xl cursor-pointer transition-all duration-700 ease-in-out hover:scale-110 z-20" 
-                         style="top: ${t.top}; left: ${t.left};" 
-                         onclick="handleToyTap('${t.id}')">
-                        ${t.icon}
-                    </div>
-                `;
-            });
-
-            html += `</div>`;
-            app.innerHTML = html;
-        }
-
-        window.handleToyTap = function(toyId) {
-            const toyEl = document.getElementById(toyId);
-            if (!toyEl || toyEl.classList.contains('collected')) return;
-            
-            toyEl.classList.add('collected');
-            playSound('pop');
-            
-            // Animate to box
-            const box = document.getElementById('toybox');
-            const boxRect = box.getBoundingClientRect();
-            const appRect = document.getElementById('app').getBoundingClientRect();
-            
-            // Calculate relative position to move to the box
-            const targetTop = (boxRect.top - appRect.top) + 20 + 'px';
-            const targetLeft = (boxRect.left - appRect.left) + 20 + 'px';
-
-            toyEl.style.top = targetTop;
-            toyEl.style.left = targetLeft;
-            toyEl.style.transform = 'scale(0.2)';
-            toyEl.style.opacity = '0';
-
-            gameData.toysLeft--;
-
-            if (gameData.toysLeft > 0) {
-                speak(["Pintar!", "Bagus!", "Satu lagi!"][Math.floor(Math.random()*3)]);
-            }
-
-            if (gameData.toysLeft === 0) {
-                setTimeout(() => {
-                    playSound('success');
-                    box.classList.add('animate-bounce');
-                    setTimeout(() => winLevel(3, "Luar biasa! Kamu anak yang bertanggung jawab karena sudah merapikan mainanmu sendiri."), 1500);
-                }, 800);
-            }
-        };
-
-        function winLevel(starsEarned, reflectionText) {
-            // Update progress
-            const world = state.currentWorld;
-            if (state.progress[world].stars < starsEarned) {
-                const diff = starsEarned - state.progress[world].stars;
-                state.progress[world].stars = starsEarned;
-                state.totalStars += diff;
-            }
-            
-            // Unlock next level logic
-            if (world === 'honesty') state.progress['responsibility'].unlocked = true;
-            if (world === 'responsibility') state.progress['discipline'].unlocked = true; // Just logic, game 3 not built yet
-
-            createConfetti();
+    } else {
+        playSound('error');
+        const el = document.getElementById(`owner-${ownerId}`);
+        el?.classList.add('shake');
+        setTimeout(() => el?.classList.remove('shake'), 500);
+        gameData.selectedItem = null;
+        drawHonestyGame();
+        speak(`Hmm, ${item.name} sepertinya bukan milik ${owner.name}. Coba yang lain!`);
+    }
+};
+ 
+// ===================== GAME 2: PULAU TANGGUNG JAWAB =====================
+function initResponsibilityGame() {
+    speak("Pulau Tanggung Jawab. Ketuk mainan yang berserakan untuk merapikannya!");
+    gameData = {
+        toysLeft: 5,
+        toys: [
+            { id: 't1', icon: '🚗', top: '15%', left: '8%'  },
+            { id: 't2', icon: '⚽', top: '35%', left: '65%' },
+            { id: 't3', icon: '🧸', top: '55%', left: '15%' },
+            { id: 't4', icon: '🎮', top: '20%', left: '55%' },
+            { id: 't5', icon: '🪀', top: '50%', left: '50%' }
+        ]
+    };
+    drawResponsibilityGame();
+}
+ 
+function drawResponsibilityGame() {
+    const w = worlds.find(x => x.id === 'responsibility');
+    let html = `
+    <div class="p-4 h-full flex flex-col bg-gradient-to-b ${w.bg} relative overflow-hidden">
+        <div class="flex justify-between items-center mb-2 relative z-10">
+            <button onclick="changeScreen('map')" class="bg-white p-2.5 rounded-full shadow-md">🔙</button>
+            <h2 class="font-black ${w.textColor} bg-white/70 px-4 py-1 rounded-full text-base">Tanggung Jawab 🧹</h2>
+            <div class="bg-white/60 px-3 py-1 rounded-full text-sm font-black ${w.textColor}">${gameData.toysLeft} lagi</div>
+        </div>
+        <p class="text-center font-bold ${w.textColor} mb-2 bg-white/50 p-2 rounded-xl text-sm relative z-10">Ketuk semua mainan untuk merapikannya!</p>
+        
+        <!-- Floor decorations -->
+        <div class="absolute bottom-0 left-0 right-0 h-20 bg-amber-200/50 rounded-t-[50%] z-0"></div>
+        
+        <!-- Toy Box -->
+        <div id="toybox" class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-7xl z-10 transition-all">📦</div>
+        <div class="absolute bottom-3 left-1/2 transform -translate-x-1/2 text-xs font-black text-amber-800 z-10">Kotak Mainan</div>`;
+ 
+    gameData.toys.forEach(t => {
+        html += `
+        <div id="${t.id}" class="absolute text-5xl cursor-pointer hover:scale-110 z-20 transition-transform active:scale-90 animate-float" 
+             style="top:${t.top};left:${t.left};animation-delay:${Math.random()}s" 
+             onclick="handleToyTap('${t.id}')">
+            ${t.icon}
+        </div>`;
+    });
+ 
+    html += `</div>`;
+    app.innerHTML = html;
+}
+ 
+window.handleToyTap = function(toyId) {
+    const toyEl = document.getElementById(toyId);
+    if (!toyEl || toyEl.dataset.collected) return;
+    toyEl.dataset.collected = '1';
+    playSound('pop');
+    const box = document.getElementById('toybox');
+    if (!box) return;
+    const boxRect = box.getBoundingClientRect();
+    const appRect = app.getBoundingClientRect();
+    toyEl.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    toyEl.style.top = (boxRect.top - appRect.top + 10) + 'px';
+    toyEl.style.left = (boxRect.left - appRect.left + 10) + 'px';
+    toyEl.style.transform = 'scale(0.1)';
+    toyEl.style.opacity = '0';
+    gameData.toysLeft--;
+    if (gameData.toysLeft > 0) speak(['Hebat!','Bagus!','Terus!','Pintar!','Yuk lagi!'][Math.floor(Math.random()*5)]);
+    if (gameData.toysLeft === 0) {
+        setTimeout(() => {
             playSound('success');
-            
-            app.innerHTML = `
-                <div class="h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-yellow-200 to-yellow-400 animate-pop relative">
-                    <div class="text-8xl mb-4 animate-bounce">🏆</div>
-                    <div class="flex gap-2 mb-6 text-5xl">
-                        <span class="animate-pop" style="animation-delay: 0.1s">⭐</span>
-                        <span class="animate-pop" style="animation-delay: 0.3s">⭐</span>
-                        <span class="animate-pop" style="animation-delay: 0.5s">⭐</span>
+            box?.classList.add('animate-bounce');
+            setTimeout(() => winLevel(3, "Luar biasa! Kamu anak yang bertanggung jawab. Merapikan mainan sendiri itu tanda kamu sudah besar!"), 1200);
+        }, 700);
+    }
+};
+ 
+// ===================== GAME 3: KOTA DISIPLIN =====================
+function initDisciplineGame() {
+    speak("Kota Disiplin! Susun jadilan harian Budi dengan urutan yang benar ya!");
+    gameData = {
+        schedule: [
+            { id: 'a1', icon: '⏰', label: 'Bangun Pagi', order: 1, placed: false },
+            { id: 'a2', icon: '🪥', label: 'Gosok Gigi', order: 2, placed: false },
+            { id: 'a3', icon: '🥣', label: 'Sarapan',    order: 3, placed: false },
+            { id: 'a4', icon: '🎒', label: 'Sekolah',    order: 4, placed: false },
+            { id: 'a5', icon: '📚', label: 'Belajar',    order: 5, placed: false }
+        ],
+        slots: [null, null, null, null, null],
+        selected: null,
+        errors: 0
+    };
+    drawDisciplineGame();
+}
+ 
+function drawDisciplineGame() {
+    const w = worlds.find(x => x.id === 'discipline');
+    const placed = gameData.schedule.filter(a => a.placed);
+    const notPlaced = gameData.schedule.filter(a => !a.placed);
+    
+    let html = `
+    <div class="p-4 h-full flex flex-col bg-gradient-to-b ${w.bg} overflow-hidden">
+        <div class="flex justify-between items-center mb-2">
+            <button onclick="changeScreen('map')" class="bg-white p-2.5 rounded-full shadow-md">🔙</button>
+            <h2 class="font-black ${w.textColor} bg-white/70 px-4 py-1 rounded-full text-base">Kota Disiplin ⏰</h2>
+            <div class="bg-white/60 px-3 py-1 rounded-full text-sm font-black ${w.textColor}">${placed.length}/5</div>
+        </div>
+        <p class="text-center font-bold ${w.textColor} mb-3 bg-white/50 p-2 rounded-xl text-sm">Susun jadwal Budi dari pagi ke sore!</p>
+        
+        <!-- Slots -->
+        <div class="bg-white/50 rounded-3xl p-3 mb-3 border-4 border-white">
+            <p class="text-xs font-black ${w.textColor} mb-2 text-center">📋 Jadwal Harian Budi</p>
+            <div class="space-y-2">
+                ${gameData.slots.map((slot, i) => `
+                <div class="flex items-center gap-2">
+                    <div class="bg-sky-400 text-white font-black w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0">${i+1}</div>
+                    <div class="discipline-clock flex-1 h-12 rounded-2xl border-3 flex items-center px-3 gap-2 cursor-pointer ${slot ? 'bg-sky-100 border-sky-400' : 'bg-white/80 border-dashed border-gray-300'}" style="border-width:3px"
+                         onclick="handleSlotTap(${i})">
+                        ${slot ? `<span class="text-2xl">${gameData.schedule.find(a=>a.id===slot)?.icon}</span><span class="font-black text-sky-800 text-sm">${gameData.schedule.find(a=>a.id===slot)?.label}</span>` : `<span class="text-gray-400 text-sm font-bold">Ketuk untuk mengisi...</span>`}
                     </div>
-                    <div class="glass-panel p-6 rounded-3xl text-center mb-8 w-full">
-                        <h2 class="text-2xl font-black text-yellow-800 mb-2">Misi Selesai!</h2>
-                        <p class="text-yellow-900 font-bold leading-relaxed">"${reflectionText}"</p>
-                    </div>
-                    <button onclick="changeScreen('map')" class="btn-game bg-blue-500 text-white text-2xl font-black py-4 px-10 rounded-full border-4 border-white">
-                        Lanjut Petualangan! 🚀
-                    </button>
-                </div>
-            `;
-            
-            speak(reflectionText);
+                </div>`).join('')}
+            </div>
+        </div>
+        
+        <!-- Items to pick -->
+        <p class="text-xs font-black ${w.textColor} mb-2 text-center">Pilih kegiatan yang belum dijadwalkan:</p>
+        <div class="flex flex-wrap gap-2 justify-center">
+            ${notPlaced.map(a => `
+            <button onclick="handleActivityTap('${a.id}')" 
+                class="discipline-clock flex items-center gap-1.5 px-3 py-2 rounded-2xl border-3 font-black text-sm transition-all ${gameData.selected === a.id ? 'bg-yellow-300 border-yellow-500 scale-110' : 'bg-white border-sky-300'}" style="border-width:3px">
+                <span class="text-xl">${a.icon}</span><span class="text-sky-800">${a.label}</span>
+            </button>`).join('')}
+        </div>
+    </div>`;
+    app.innerHTML = html;
+}
+ 
+window.handleActivityTap = function(id) {
+    gameData.selected = gameData.selected === id ? null : id;
+    playSound('pop');
+    drawDisciplineGame();
+    if (gameData.selected) speak(`Kamu memilih ${gameData.schedule.find(a=>a.id===id)?.label}. Taruh di urutan berapa?`);
+};
+ 
+window.handleSlotTap = function(slotIdx) {
+    if (!gameData.selected) { speak("Pilih kegiatannya dulu!"); return; }
+    const act = gameData.schedule.find(a => a.id === gameData.selected);
+    if (!act) return;
+    if (act.order === slotIdx + 1) {
+        act.placed = true;
+        gameData.slots[slotIdx] = act.id;
+        gameData.selected = null;
+        playSound('success');
+        speak(`Betul! ${act.label} ada di urutan ke-${act.order}!`);
+        drawDisciplineGame();
+        if (gameData.schedule.every(a => a.placed)) {
+            setTimeout(() => winLevel(3, "Keren! Kamu tahu cara mengatur jadwal harian yang baik. Anak disiplin selalu menyelesaikan tugasnya tepat waktu!"), 1000);
         }
-
-        function renderDashboard() {
-            speak("Area Orang Tua. Di sini Anda bisa melihat perkembangan anak.");
-            let html = `
-                <div class="p-6 h-full flex flex-col bg-white animate-pop">
-                    <div class="flex items-center gap-4 mb-6">
-                        <button onclick="changeScreen('menu')" class="bg-gray-200 p-3 rounded-full shadow-sm text-xl">🔙</button>
-                        <h2 class="text-2xl font-black text-gray-800">Area Orang Tua 📊</h2>
-                    </div>
-                    
-                    <div class="glass-panel bg-blue-50 p-6 rounded-3xl mb-6 text-center shadow-sm">
-                        <div class="text-4xl mb-2">⭐ ${state.totalStars}</div>
-                        <p class="font-bold text-gray-600">Total Bintang Terkumpul</p>
-                    </div>
-
-                    <h3 class="font-bold text-lg text-gray-700 mb-4 px-2">Perkembangan Karakter</h3>
-                    <div class="flex-1 overflow-y-auto space-y-3 px-2 pb-10">
-            `;
-
-            worlds.forEach(w => {
+    } else {
+        gameData.errors++;
+        playSound('error');
+        const slot = document.querySelector(`[onclick="handleSlotTap(${slotIdx})"]`);
+        slot?.classList.add('shake');
+        setTimeout(() => slot?.classList.remove('shake'), 500);
+        gameData.selected = null;
+        drawDisciplineGame();
+        speak(`Hmm, sepertinya ${act.label} bukan urutan ke-${slotIdx+1}. Coba lagi!`);
+    }
+};
+ 
+// ===================== GAME 4: TAMAN KEPEDULIAN =====================
+function initCareGame() {
+    speak("Taman Kepedulian! Bantu teman yang sedang membutuhkan pertolongan ya!");
+    gameData = {
+        scenarios: [
+            {
+                id: 'sc1', done: false,
+                situation: 'Ani terjatuh dan lututnya terluka. Apa yang kamu lakukan?',
+                icon: '🤕', friend: 'Ani',
+                options: [
+                    { text: 'Pura-pura tidak lihat', correct: false, response: 'Itu kurang baik. Teman yang baik selalu peduli!' },
+                    { text: 'Bantu dan panggil guru', correct: true, response: 'Hebat! Kamu membantu Ani dengan sigap!' },
+                    { text: 'Ketawa dan pergi', correct: false, response: 'Itu tidak baik. Teman tidak boleh ditertawakan saat sedih.' }
+                ]
+            },
+            {
+                id: 'sc2', done: false,
+                situation: 'Budi tidak punya bekal makan siang. Perutnya keroncongan.',
+                icon: '😢', friend: 'Budi',
+                options: [
+                    { text: 'Pamerkan bekalmu', correct: false, response: 'Itu kurang empati. Coba bayangkan posisi Budi!' },
+                    { text: 'Bagikan sebagian bekalmu', correct: true, response: 'Luar biasa! Berbagi itu indah dan membuat teman bahagia!' },
+                    { text: 'Diam saja', correct: false, response: 'Lebih baik peduli dan berbagi ya!' }
+                ]
+            },
+            {
+                id: 'sc3', done: false,
+                situation: 'Cici tidak bisa mengerjakan soal matematika dan hampir menangis.',
+                icon: '😰', friend: 'Cici',
+                options: [
+                    { text: 'Beri contekan jawaban', correct: false, response: 'Memberi contekan bukan cara yang baik. Itu bisa merugikan teman!' },
+                    { text: 'Ajari cara mengerjakannya', correct: true, response: 'Bagus! Mengajari lebih baik dari memberi jawaban langsung!' },
+                    { text: 'Bilang "aku juga tidak bisa"', correct: false, response: 'Cobalah untuk membantu semampumu ya!' }
+                ]
+            }
+        ],
+        currentScenario: 0,
+        correctCount: 0
+    };
+    drawCareGame();
+}
+ 
+function drawCareGame() {
+    const w = worlds.find(x => x.id === 'care');
+    const sc = gameData.scenarios[gameData.currentScenario];
+    if (!sc) return;
+    
+    app.innerHTML = `
+    <div class="p-4 h-full flex flex-col bg-gradient-to-b ${w.bg} overflow-hidden">
+        <div class="flex justify-between items-center mb-2">
+            <button onclick="changeScreen('map')" class="bg-white p-2.5 rounded-full shadow-md">🔙</button>
+            <h2 class="font-black ${w.textColor} bg-white/70 px-4 py-1 rounded-full text-base">Taman Kepedulian 💖</h2>
+            <div class="bg-white/60 px-3 py-1 rounded-full text-sm font-black ${w.textColor}">${gameData.currentScenario+1}/3</div>
+        </div>
+        
+        <!-- Scenario Card -->
+        <div class="glass-panel rounded-3xl p-5 mb-4 text-center border-4 border-pink-200">
+            <div class="text-6xl mb-3 care-friend animate-bounce-slow">${sc.icon}</div>
+            <p class="font-black text-pink-800 text-base mb-1">${sc.friend}</p>
+            <p class="font-bold text-gray-700 text-sm leading-relaxed">${sc.situation}</p>
+        </div>
+        
+        <p class="text-center font-black ${w.textColor} mb-3 text-sm">Apa yang akan kamu lakukan?</p>
+        
+        <div class="space-y-2 flex-1">
+            ${sc.options.map((opt, i) => `
+            <button onclick="handleCareChoice(${i})" 
+                class="btn-game w-full bg-white text-gray-800 font-bold py-3 px-4 rounded-2xl border-3 text-left flex items-center gap-3 text-sm leading-snug" style="border-width:3px;border-color:#F9A8D4">
+                <span class="bg-pink-100 w-7 h-7 rounded-full flex items-center justify-center font-black text-pink-600 flex-shrink-0">${String.fromCharCode(65+i)}</span>
+                ${opt.text}
+            </button>`).join('')}
+        </div>
+    </div>`;
+    speak(sc.situation);
+}
+ 
+window.handleCareChoice = function(optionIdx) {
+    const sc = gameData.scenarios[gameData.currentScenario];
+    const opt = sc.options[optionIdx];
+    if (opt.correct) {
+        playSound('success');
+        gameData.correctCount++;
+    } else {
+        playSound('error');
+    }
+    
+    // Show feedback
+    const w = worlds.find(x => x.id === 'care');
+    app.innerHTML = `
+    <div class="p-4 h-full flex flex-col bg-gradient-to-b ${w.bg} items-center justify-center">
+        <div class="text-7xl mb-4 ${opt.correct ? 'animate-bounce' : 'shake'}">${opt.correct ? '🌸' : '😕'}</div>
+        <div class="glass-panel rounded-3xl p-6 text-center w-full border-4 ${opt.correct ? 'border-pink-300' : 'border-gray-200'} mb-6">
+            <h3 class="font-black text-xl mb-2 ${opt.correct ? 'text-green-600' : 'text-red-500'}">${opt.correct ? '✅ Tepat Sekali!' : '❌ Kurang Tepat'}</h3>
+            <p class="font-bold text-gray-700 text-sm leading-relaxed">"${opt.response}"</p>
+        </div>
+        <button onclick="nextCareScenario()" class="btn-game bg-pink-400 text-white font-black py-3 px-10 rounded-full border-4 border-white">
+            ${gameData.currentScenario < gameData.scenarios.length - 1 ? 'Lanjut ➡️' : 'Selesai! 🎉'}
+        </button>
+    </div>`;
+    speak(opt.response);
+};
+ 
+window.nextCareScenario = function() {
+    gameData.currentScenario++;
+    if (gameData.currentScenario >= gameData.scenarios.length) {
+        const stars = gameData.correctCount >= 3 ? 3 : gameData.correctCount >= 2 ? 2 : 1;
+        winLevel(stars, `Kamu mendapat ${gameData.correctCount} dari 3 pilihan tepat! Anak yang peduli selalu hadir saat teman membutuhkan bantuan. Terus jaga kepedulianmu!`);
+    } else {
+        drawCareGame();
+    }
+};
+ 
+// ===================== GAME 5: DESA KERJASAMA (Coming Soon Placeholder) =====================
+function initCoopGame() {
+    changeScreen('map');
+    setTimeout(() => alertCustom('Desa Kerja Sama segera hadir! 🚧', '🤝'), 100);
+}
+ 
+// ===================== STICKERS =====================
+function renderStickers() {
+    app.innerHTML = `
+    <div class="p-5 h-full flex flex-col bg-gradient-to-b from-yellow-200 to-white overflow-hidden">
+        <div class="flex items-center gap-3 mb-5">
+            <button onclick="changeScreen('menu')" class="bg-white p-2.5 rounded-full shadow-md text-xl">🔙</button>
+            <h2 class="text-xl font-black text-yellow-800">Koleksi Stiker 🏅</h2>
+        </div>
+        <p class="text-sm font-bold text-gray-500 text-center mb-4">Kumpulkan semua stiker dengan menyelesaikan misi!</p>
+        <div class="flex-1 overflow-y-auto">
+            <div class="grid grid-cols-3 gap-3 pb-6">
+                ${stickerRewards.map(s => {
+                    const earned = state.stickers.includes(s.id);
+                    return `
+                    <div class="sticker-badge glass-panel rounded-2xl p-3 text-center ${earned ? 'border-4 border-yellow-400' : 'opacity-50 grayscale border-4 border-gray-200'}">
+                        <div class="text-4xl mb-1">${earned ? s.icon : '❓'}</div>
+                        <p class="text-xs font-black text-gray-700 leading-tight">${earned ? s.name : '???'}</p>
+                        ${earned ? '<p class="text-xs text-yellow-500 font-bold mt-0.5">✅ Diperoleh!</p>' : ''}
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>
+        <p class="text-center text-xs text-gray-400 font-bold">${state.stickers.length}/${stickerRewards.length} stiker terkumpul</p>
+    </div>`;
+    speak(`Kamu sudah punya ${state.stickers.length} stiker. Kumpulkan semuanya!`);
+}
+ 
+// ===================== DASHBOARD =====================
+function renderDashboard() {
+    speak("Area Orang Tua. Lihat perkembangan karakter anak di sini.");
+    const tips = [
+        "💡 Setelah bermain, tanyakan: 'Tadi kamu belajar tentang apa?'",
+        "💡 Apresiasi usaha anak, bukan hanya hasil bintangnya.",
+        "💡 Mainkan bersama anak untuk mempererat hubungan.",
+        "💡 Hubungkan cerita game dengan kejadian nyata sehari-hari.",
+        "💡 Beri pujian spesifik: 'Kamu sabar sekali tadi mengatur jadwalnya!'"
+    ];
+    const today = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});
+    
+    app.innerHTML = `
+    <div class="p-5 h-full flex flex-col bg-white overflow-hidden">
+        <div class="flex items-center gap-3 mb-4">
+            <button onclick="changeScreen('menu')" class="bg-gray-100 p-2.5 rounded-full shadow-sm text-xl">🔙</button>
+            <div>
+                <h2 class="text-lg font-black text-gray-800">Laporan Orang Tua 📊</h2>
+                <p class="text-xs text-gray-400">${today}</p>
+            </div>
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-3 gap-2 mb-4">
+            <div class="bg-yellow-50 rounded-2xl p-3 text-center border-2 border-yellow-200">
+                <div class="text-2xl font-black text-yellow-600">⭐ ${state.totalStars}</div>
+                <p class="text-xs text-gray-500 font-bold">Total Bintang</p>
+            </div>
+            <div class="bg-red-50 rounded-2xl p-3 text-center border-2 border-red-200">
+                <div class="text-2xl font-black text-red-500">🔥 ${state.streak.count}</div>
+                <p class="text-xs text-gray-500 font-bold">Hari Berturut</p>
+            </div>
+            <div class="bg-purple-50 rounded-2xl p-3 text-center border-2 border-purple-200">
+                <div class="text-2xl font-black text-purple-600">🏅 ${state.stickers.length}</div>
+                <p class="text-xs text-gray-500 font-bold">Stiker</p>
+            </div>
+        </div>
+ 
+        <!-- World Progress -->
+        <h3 class="font-black text-gray-700 text-sm mb-3">📈 Perkembangan Karakter</h3>
+        <div class="flex-1 overflow-y-auto space-y-2.5 pb-2">
+            ${worlds.map(w => {
                 const p = state.progress[w.id];
-                const percentage = p.unlocked ? (p.stars / 3) * 100 : 0;
-                html += `
-                    <div class="mb-4">
-                        <div class="flex justify-between text-sm font-bold text-gray-600 mb-1">
-                            <span>${w.icon} ${w.name.split(' ')[1] || w.name}</span>
-                            <span>${p.stars}/3</span>
+                const pct = p.unlocked ? (p.stars/3)*100 : 0;
+                const values = {honesty:'Kejujuran',responsibility:'Tanggung Jawab',discipline:'Disiplin',care:'Kepedulian',cooperation:'Kerja Sama'};
+                return `
+                <div class="bg-gray-50 rounded-2xl p-3 border border-gray-100">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${w.icon}</span>
+                            <div>
+                                <p class="font-black text-gray-800 text-sm leading-none">${values[w.id]}</p>
+                                <p class="text-xs text-gray-400">${p.unlocked ? `Dimainkan ${p.playCount}x` : 'Belum dibuka'}</p>
+                            </div>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-4">
-                            <div class="${w.color} h-4 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div>
-                        </div>
+                        <span class="font-black text-gray-600 text-sm">${p.stars}/3 ⭐</span>
                     </div>
-                `;
-            });
-
-            html += `
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="${w.color} h-2.5 rounded-full progress-bar-fill" style="width:${pct}%"></div>
                     </div>
-                    <div class="mt-4 p-4 bg-yellow-50 rounded-2xl border-2 border-yellow-200">
-                        <p class="text-xs text-gray-600 text-center">
-                            Aplikasi ini melatih aspek kognitif dan motorik halus melalui interaksi sentuh, serta menanamkan nilai moral secara audio-visual.
-                        </p>
-                    </div>
-                </div>
-            `;
-            app.innerHTML = html;
-        }
-
-        // Initialize App
-        window.onload = () => {
-            renderMenu();
-        };
-    </script>
+                </div>`;
+            }).join('')}
+            
+            <!-- Parenting Tip -->
+            <div class="bg-blue-50 rounded-2xl p-4 border-2 border-blue-100 mt-2">
+                <p class="font-black text-blue-700 text-xs mb-1">💬 Tips Parenting Hari Ini</p>
+                <p class="text-xs text-gray-600 leading-relaxed">${tips[Math.floor(Math.random()*tips.length)]}</p>
+            </div>
+            
+            <div class="bg-gray-50 rounded-2xl p-3 border border-gray-100">
+                <p class="text-xs text-gray-500 text-center leading-relaxed">
+                    SensePlay melatih <strong>kognitif</strong> (penalaran, urutan), <strong>sosial-emosional</strong> (empati, tanggung jawab), dan <strong>motorik halus</strong> melalui sentuhan layar.
+                </p>
+            </div>
+        </div>
+    </div>`;
+}
+ 
+// ===================== INIT =====================
+window.onload = () => {
+    renderSplash();
+    // Progress bar animation
+    setTimeout(() => {
+        document.querySelectorAll('.progress-bar-fill').forEach(el => {
+            const w = el.style.width;
+            el.style.width = '0%';
+            requestAnimationFrame(() => el.style.width = w);
+        });
+    }, 200);
+};
+</script>
 </body>
 </html>
