@@ -119,7 +119,7 @@ const state = {
         responsibility: { stars: 0, unlocked: false, playCount: 0 },
         discipline:     { stars: 0, unlocked: false, playCount: 0 },
         care:           { stars: 0, unlocked: false, playCount: 0 },
-        cooperation:    { stars: 0, unlocked: false, playCount: 0 }
+        cooperation:    { stars: 0, unlocked: true, playCount: 0 }
     },
     stickers: [],
     totalStars: 0,
@@ -131,7 +131,7 @@ const worlds = [
     { id: 'responsibility', name: 'Pulau Tanggung Jawab',    color: 'bg-orange-400',   bg: 'from-orange-300 to-orange-100', textColor: 'text-orange-900', icon: '🧸', desc: 'Bereskan mainan yang berserakan.' },
     { id: 'discipline',     name: 'Kota Disiplin',           color: 'bg-sky-400',      bg: 'from-sky-300 to-sky-100', textColor: 'text-sky-900', icon: '⏰', desc: 'Susun jadwal harian dengan benar.' },
     { id: 'care',           name: 'Taman Kepedulian',        color: 'bg-pink-400',     bg: 'from-pink-300 to-pink-100', textColor: 'text-pink-900', icon: '💖', desc: 'Bantu teman yang kesulitan.' },
-    { id: 'cooperation',    name: 'Desa Kerja Sama',         color: 'bg-purple-400',   bg: 'from-purple-300 to-purple-100', textColor: 'text-purple-900', icon: '🤝', desc: 'Pilih tindakan yang tepat bersama!' }
+    { id: 'cooperation',    name: 'Desa Harmoni',            color: 'bg-purple-400',   bg: 'from-purple-300 to-purple-100', textColor: 'text-purple-900', icon: '🤝', desc: 'Bantu Kiki, Bobi, dan Cici bekerja sama!' }
 ];
  
 const avatarList = ['🦁','🐼','🐸','🦊','🐬','🦋','🐧','🐨'];
@@ -446,7 +446,7 @@ function renderMap() {
     worlds.forEach((w, idx) => {
         const isUnlocked = state.progress[w.id].unlocked;
         const stars = state.progress[w.id].stars;
-        const isPlayable = w.id !== 'cooperation';
+        const isPlayable = true;
         html += `
         <div class="world-card glass-panel p-4 rounded-3xl flex items-center gap-3 ${isUnlocked && isPlayable ? 'cursor-pointer' : 'opacity-60 grayscale'}"
              onclick="${isUnlocked && isPlayable ? `changeScreen('play','${w.id}')` : isUnlocked ? `alertCustom('Dunia ini akan segera hadir! 🚧')` : `alertCustom('Selesaikan dunia sebelumnya dulu ya! 🔒')`}">
@@ -904,11 +904,440 @@ window.nextCareScenario = function() {
     }
 };
  
-// ===================== GAME 5: DESA KERJASAMA (Coming Soon Placeholder) =====================
+// ===================== GAME 5: DESA HARMONI =====================
 function initCoopGame() {
-    changeScreen('map');
-    setTimeout(() => alertCustom('Desa Kerja Sama segera hadir! 🚧', '🤝'), 100);
+    speak("Selamat datang di Desa Harmoni! Bantu Kiki, Bobi, dan Cici bekerja sama membangun jembatan!");
+    gameData = {
+        phase: 1,
+        // Phase 1 sub-steps: 'cici_tap' -> 'bobi_drag' -> 'kiki_knot'
+        p1step: 'cici_tap',
+        logFallen: false,
+        logPos: { x: 60, y: 28 }, // percent
+        logDragging: false,
+        logAtRiver: false,
+        knotDots: [
+            { id: 0, cx: 30, cy: 50, connected: false },
+            { id: 1, cx: 55, cy: 30, connected: false },
+            { id: 2, cx: 80, cy: 50, connected: false },
+            { id: 3, cx: 55, cy: 70, connected: false },
+            { id: 4, cx: 30, cy: 50, connected: true  }
+        ],
+        knotOrder: [0,1,2,3,4],
+        knotCurrent: 0,
+        knotLines: [],
+        // Phase 2
+        applesFallen: 0,
+        applesCaught: 0,
+        applesDelivered: 0,
+        totalApples: 3,
+        appleActive: false,
+        applePos: { x: 50, y: 30 },
+        appleStage: 'tree', // tree -> kiki -> cici -> done
+    };
+    drawCoopGame();
 }
+ 
+function drawCoopGame() {
+    if (gameData.phase === 1) drawCoopPhase1();
+    else drawCoopPhase2();
+}
+ 
+// ---- PHASE 1: BUILD BRIDGE ----
+function drawCoopPhase1() {
+    const step = gameData.p1step;
+    const stepLabels = { cici_tap: '1/3', bobi_drag: '2/3', kiki_knot: '3/3' };
+ 
+    let sceneHTML = '';
+    let instructionText = '';
+    let instructionIcon = '';
+ 
+    if (step === 'cici_tap') {
+        instructionText = 'Ketuk Cici 🐦 untuk terbang mengambil balok kayu di atas pohon!';
+        instructionIcon = '🐦';
+        sceneHTML = `
+        <div class="relative w-full h-48 rounded-3xl overflow-hidden bg-gradient-to-b from-sky-300 to-green-200 border-4 border-white shadow-inner">
+            <!-- Hills -->
+            <div class="absolute bottom-0 left-0 right-0 h-14 bg-green-400 rounded-t-full opacity-80"></div>
+            <!-- River -->
+            <div class="absolute bottom-5 left-1/3 w-1/3 h-5 bg-blue-300 rounded-full opacity-80 flex items-center justify-center">
+                <span class="text-xs font-black text-blue-700">🌊</span>
+            </div>
+            <!-- Tree -->
+            <div class="absolute top-2 left-3 text-5xl">🌳</div>
+            <!-- Log stuck in tree -->
+            <div class="absolute text-2xl" style="top:14%;left:18%">🪵</div>
+            <!-- Cici -->
+            <div id="cici-char" onclick="handleCiciTap()" 
+                class="absolute text-4xl cursor-pointer transition-all hover:scale-125 active:scale-90 animate-bounce-slow" 
+                style="top:22%;left:40%">🐦</div>
+            <div class="absolute text-xs font-black text-purple-800 bg-white/70 px-2 py-0.5 rounded-full" style="top:55%;left:36%">Cici</div>
+            <!-- Characters waiting -->
+            <div class="absolute text-4xl" style="bottom:8%;left:8%">🐻</div>
+            <div class="absolute text-xs font-black text-purple-800 bg-white/70 px-2 py-0.5 rounded-full" style="bottom:3%;left:7%">Bobi</div>
+            <div class="absolute text-4xl" style="bottom:8%;right:8%">🐰</div>
+            <div class="absolute text-xs font-black text-purple-800 bg-white/70 px-2 py-0.5 rounded-full" style="bottom:3%;right:7%">Kiki</div>
+            <!-- Tap hint -->
+            <div class="absolute animate-ping text-2xl pointer-events-none" style="top:20%;left:38%">👆</div>
+        </div>`;
+    } else if (step === 'bobi_drag') {
+        instructionText = gameData.logAtRiver ? 'Balok sudah di tepi sungai! Keren!' : 'Geser Bobi 🐻 mendorong balok kayu ke tepi sungai!';
+        instructionIcon = '🐻';
+        const lx = gameData.logPos.x;
+        const ly = gameData.logPos.y;
+        sceneHTML = `
+        <div class="relative w-full h-48 rounded-3xl overflow-hidden bg-gradient-to-b from-sky-200 to-green-200 border-4 border-white shadow-inner select-none"
+             id="bobi-scene"
+             ontouchstart="startBobiDrag(event)" ontouchmove="doBobiDrag(event)" ontouchend="endBobiDrag(event)"
+             onmousedown="startBobiDrag(event)" onmousemove="doBobiDrag(event)" onmouseup="endBobiDrag(event)">
+            <!-- Hills -->
+            <div class="absolute bottom-0 left-0 right-0 h-14 bg-green-400 rounded-t-full opacity-80"></div>
+            <!-- River -->
+            <div class="absolute bottom-5 left-1/3 w-1/3 h-5 bg-blue-300 rounded-full opacity-90 flex items-center justify-center">
+                <span class="text-xs font-black text-blue-700">🌊</span>
+            </div>
+            <div class="absolute text-xs font-black text-blue-700" style="bottom:14%;left:37%">Sungai</div>
+            <!-- Log (draggable via Bobi) -->
+            <div id="log-obj" class="absolute text-3xl transition-none cursor-grab" style="top:${ly}%;left:${lx}%">🪵</div>
+            <!-- Bobi follows log -->
+            <div class="absolute text-4xl transition-none" style="top:${Math.min(ly+8,55)}%;left:${Math.max(lx-12,0)}%">🐻</div>
+            <!-- River marker -->
+            <div class="absolute w-1 h-full border-l-4 border-dashed border-blue-400/60 pointer-events-none" style="left:33%"></div>
+            <!-- Cici success above -->
+            <div class="absolute text-3xl animate-bounce-slow" style="top:5%;right:10%">🐦✅</div>
+            <!-- Kiki waiting -->
+            <div class="absolute text-3xl" style="bottom:8%;right:8%">🐰</div>
+            <div class="absolute text-xs font-black text-purple-800 bg-white/70 px-2 py-0.5 rounded-full" style="bottom:3%;right:7%">Kiki</div>
+            ${gameData.logAtRiver ? `<div class="absolute inset-0 bg-green-300/20 flex items-center justify-center pointer-events-none"><div class="bg-white/90 px-4 py-2 rounded-2xl font-black text-green-700 text-sm">✅ Balok sampai!</div></div>` : ''}
+        </div>`;
+    } else if (step === 'kiki_knot') {
+        instructionText = 'Bantu Kiki 🐰 mengikat tali! Hubungkan titik-titik secara berurutan!';
+        instructionIcon = '🐰';
+        const dots = gameData.knotDots;
+        const lines = gameData.knotLines;
+        sceneHTML = `
+        <div class="relative w-full h-48 rounded-3xl overflow-hidden bg-gradient-to-b from-sky-200 to-amber-100 border-4 border-white shadow-inner">
+            <!-- Scene backdrop -->
+            <div class="absolute bottom-0 left-0 right-0 h-14 bg-green-400 rounded-t-full opacity-70"></div>
+            <div class="absolute bottom-5 left-1/3 w-1/3 h-5 bg-blue-300 rounded-full opacity-90"></div>
+            <div class="absolute text-2xl" style="bottom:8%;left:5%">🐻</div>
+            <div class="absolute text-2xl" style="bottom:8%;right:5%">🐦</div>
+            <!-- Kiki in center -->
+            <div class="absolute text-3xl animate-bounce-slow" style="bottom:10%;left:43%">🐰</div>
+            <!-- SVG canvas for knot game -->
+            <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" id="knot-svg"
+                 ontouchstart="knotTouchStart(event)" onmousedown="knotTouchStart(event)">
+                <!-- Lines drawn -->
+                ${lines.map(l => `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" stroke="#A78BFA" stroke-width="2.5" stroke-linecap="round"/>`).join('')}
+                <!-- Dots -->
+                ${dots.map((d,i) => {
+                    const isNext = i === gameData.knotCurrent && i < dots.length - 1;
+                    const isDone = i < gameData.knotCurrent;
+                    return `<circle cx="${d.cx}" cy="${d.cy}" r="${isNext?5:3.5}" 
+                        fill="${isDone ? '#6EE7B7' : isNext ? '#FDE68A' : '#EDE9FE'}"
+                        stroke="${isNext ? '#F59E0B' : '#8B5CF6'}" stroke-width="2"
+                        onclick="handleKnotDot(${i})"/>
+                    <text x="${d.cx}" y="${d.cy+1}" text-anchor="middle" dominant-baseline="middle" font-size="3.5" fill="${isDone?'#065F46':'#5B21B6'}" font-weight="bold">${i+1}</text>`;
+                }).join('')}
+            </svg>
+            <!-- Rope label -->
+            <div class="absolute text-xs font-black text-purple-700 bg-white/70 px-2 py-0.5 rounded-full" style="top:5%;right:5%">Tali Jembatan</div>
+        </div>`;
+    }
+ 
+    app.innerHTML = `
+    <div class="p-4 h-full flex flex-col bg-gradient-to-b from-purple-300 to-purple-50 overflow-hidden">
+        <div class="flex justify-between items-center mb-2">
+            <button onclick="changeScreen('map')" class="bg-white p-2.5 rounded-full shadow-md">🔙</button>
+            <h2 class="font-black text-purple-800 bg-white/70 px-4 py-1 rounded-full text-sm">Desa Harmoni 🏘️ Fase 1</h2>
+            <div class="bg-white/60 px-3 py-1 rounded-full text-xs font-black text-purple-800">${stepLabels[step]}</div>
+        </div>
+        
+        <!-- Instruction bubble -->
+        <div class="bg-white/80 rounded-2xl px-4 py-2 mb-3 flex items-center gap-2 border-2 border-purple-200">
+            <span class="text-2xl">${instructionIcon}</span>
+            <p class="text-sm font-bold text-purple-800 leading-snug flex-1">${instructionText}</p>
+        </div>
+        
+        ${sceneHTML}
+        
+        <!-- Character cards -->
+        <div class="flex gap-2 mt-3">
+            <div class="flex-1 bg-white/60 rounded-2xl p-2 text-center border-2 ${step==='cici_tap'?'border-yellow-400 bg-yellow-50':'border-white/60'}">
+                <div class="text-2xl">🐦</div><p class="text-xs font-black text-purple-700">Cici</p>
+                <p class="text-xs text-gray-500">Bisa terbang</p>
+            </div>
+            <div class="flex-1 bg-white/60 rounded-2xl p-2 text-center border-2 ${step==='bobi_drag'?'border-yellow-400 bg-yellow-50':'border-white/60'}">
+                <div class="text-2xl">🐻</div><p class="text-xs font-black text-purple-700">Bobi</p>
+                <p class="text-xs text-gray-500">Super kuat</p>
+            </div>
+            <div class="flex-1 bg-white/60 rounded-2xl p-2 text-center border-2 ${step==='kiki_knot'?'border-yellow-400 bg-yellow-50':'border-white/60'}">
+                <div class="text-2xl">🐰</div><p class="text-xs font-black text-purple-700">Kiki</p>
+                <p class="text-xs text-gray-500">Lincah & cekatan</p>
+            </div>
+        </div>
+    </div>`;
+ 
+    // Re-attach drag for bobi if needed
+    if (step === 'bobi_drag') setupBobiDrag();
+}
+ 
+// --- Cici tap ---
+window.handleCiciTap = function() {
+    playSound('success');
+    speak("Hore! Cici berhasil menjatuhkan balok kayu! Sekarang Bobi yang kuat harus mendorongnya ke sungai!");
+    const el = document.getElementById('cici-char');
+    if (el) { el.style.top = '5%'; el.style.left = '20%'; }
+    setTimeout(() => {
+        gameData.p1step = 'bobi_drag';
+        gameData.logPos = { x: 18, y: 28 };
+        drawCoopGame();
+    }, 1200);
+};
+ 
+// --- Bobi drag ---
+let bobiDragActive = false, bobiDragOffset = { x: 0, y: 0 };
+ 
+function setupBobiDrag() {
+    bobiDragActive = false;
+}
+ 
+function getScenePos(event, scene) {
+    const rect = scene.getBoundingClientRect();
+    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+    return {
+        x: ((clientX - rect.left) / rect.width) * 100,
+        y: ((clientY - rect.top) / rect.height) * 100
+    };
+}
+ 
+window.startBobiDrag = function(e) {
+    e.preventDefault();
+    const scene = document.getElementById('bobi-scene');
+    if (!scene) return;
+    const pos = getScenePos(e, scene);
+    const lx = gameData.logPos.x, ly = gameData.logPos.y;
+    if (Math.abs(pos.x - lx) < 15 && Math.abs(pos.y - ly) < 20) {
+        bobiDragActive = true;
+        bobiDragOffset = { x: pos.x - lx, y: pos.y - ly };
+    }
+};
+ 
+window.doBobiDrag = function(e) {
+    if (!bobiDragActive) return;
+    e.preventDefault();
+    const scene = document.getElementById('bobi-scene');
+    if (!scene) return;
+    const pos = getScenePos(e, scene);
+    const newX = Math.max(0, Math.min(85, pos.x - bobiDragOffset.x));
+    const newY = Math.max(10, Math.min(55, pos.y - bobiDragOffset.y));
+    gameData.logPos = { x: newX, y: newY };
+    const logEl = document.getElementById('log-obj');
+    if (logEl) { logEl.style.left = newX+'%'; logEl.style.top = newY+'%'; }
+    // Check if log reached river area (left: 33-66%)
+    if (newX >= 28 && newX <= 52 && newY >= 20) {
+        if (!gameData.logAtRiver) {
+            gameData.logAtRiver = true;
+            bobiDragActive = false;
+            playSound('success');
+            speak("Bagus sekali! Balok sudah di tepi sungai! Sekarang Kiki yang lincah akan mengikat talinya!");
+            setTimeout(() => {
+                gameData.p1step = 'kiki_knot';
+                gameData.knotCurrent = 0;
+                gameData.knotLines = [];
+                drawCoopGame();
+            }, 1200);
+        }
+    }
+};
+ 
+window.endBobiDrag = function(e) { bobiDragActive = false; };
+ 
+// --- Kiki knot (connect the dots) ---
+window.handleKnotDot = function(idx) {
+    if (idx !== gameData.knotCurrent) {
+        playSound('error');
+        speak("Hubungkan titik secara berurutan ya! Mulai dari titik 1!");
+        return;
+    }
+    playSound('pop');
+    if (gameData.knotCurrent > 0) {
+        const prev = gameData.knotDots[gameData.knotCurrent - 1];
+        const cur = gameData.knotDots[idx];
+        gameData.knotLines.push({ x1: prev.cx, y1: prev.cy, x2: cur.cx, y2: cur.cy });
+    }
+    gameData.knotCurrent++;
+    if (gameData.knotCurrent >= gameData.knotDots.length) {
+        playSound('success');
+        speak("Luar biasa! Tali sudah terikat kuat! Jembatan Desa Harmoni berhasil dibangun! Sekarang estafet memanen buah!");
+        createConfetti();
+        setTimeout(() => {
+            gameData.phase = 2;
+            gameData.applesFallen = 0;
+            gameData.applesCaught = 0;
+            gameData.applesDelivered = 0;
+            gameData.appleStage = 'tree';
+            gameData.appleActive = false;
+            drawCoopGame();
+        }, 2500);
+    } else {
+        speak(['Satu!','Dua!','Tiga!','Hampir selesai!'][gameData.knotCurrent - 1] || 'Terus!');
+        drawCoopGame();
+    }
+};
+ 
+window.knotTouchStart = function(e) {
+    // handled by circle onclick
+};
+ 
+// ---- PHASE 2: HARVEST ESTAFET ----
+function drawCoopPhase2() {
+    const total = gameData.totalApples;
+    const delivered = gameData.applesDelivered;
+    const stage = gameData.appleStage;
+    const applesLeft = total - delivered;
+ 
+    let instruction = '';
+    let hint = '';
+    if (stage === 'tree') { instruction = 'Ketuk pohon 🌳 agar Bobi menggoyangkannya!'; hint = '👆 Ketuk pohon'; }
+    else if (stage === 'kiki') { instruction = 'Geser apel 🍎 dari Kiki ke Cici yang menunggu di gudang!'; hint = '→ Geser apel'; }
+    else if (stage === 'cici') { instruction = 'Ketuk Cici 🐦 untuk menyimpan apel ke gudang!'; hint = '👆 Ketuk Cici'; }
+ 
+    app.innerHTML = `
+    <div class="p-4 h-full flex flex-col bg-gradient-to-b from-green-300 to-green-50 overflow-hidden">
+        <div class="flex justify-between items-center mb-2">
+            <button onclick="changeScreen('map')" class="bg-white p-2.5 rounded-full shadow-md">🔙</button>
+            <h2 class="font-black text-green-800 bg-white/70 px-4 py-1 rounded-full text-sm">Desa Harmoni 🏘️ Fase 2</h2>
+            <div class="bg-white/60 px-3 py-1 rounded-full text-xs font-black text-green-800">🍎 ${delivered}/${total}</div>
+        </div>
+ 
+        <!-- Instruction -->
+        <div class="bg-white/80 rounded-2xl px-4 py-2 mb-3 flex items-center gap-2 border-2 border-green-300">
+            <span class="text-2xl">🌾</span>
+            <p class="text-sm font-bold text-green-800 leading-snug flex-1">${instruction}</p>
+        </div>
+ 
+        <!-- Scene -->
+        <div class="relative w-full h-52 rounded-3xl overflow-hidden bg-gradient-to-b from-sky-200 to-green-200 border-4 border-white shadow-inner" id="phase2-scene"
+             ontouchstart="handlePhase2Touch(event)" onmousedown="handlePhase2Touch(event)"
+             ontouchmove="handlePhase2Move(event)" onmousemove="handlePhase2Move(event)"
+             ontouchend="handlePhase2End(event)" onmouseup="handlePhase2End(event)">
+            <!-- Background elements -->
+            <div class="absolute bottom-0 left-0 right-0 h-12 bg-green-400 opacity-70 rounded-t-full"></div>
+            <!-- Bridge (earned) -->
+            <div class="absolute text-3xl" style="bottom:14%;left:42%">🌉</div>
+            <!-- Barn/storage -->
+            <div class="absolute text-4xl" style="bottom:8%;right:5%">🏚️</div>
+            <div class="absolute text-xs font-black text-green-800 bg-white/70 px-1.5 py-0.5 rounded-full" style="bottom:2%;right:6%">Gudang</div>
+            <!-- Apple Tree -->
+            <div id="apple-tree" class="absolute text-5xl cursor-pointer hover:scale-110 active:scale-95 transition-transform ${stage==='tree' ? 'animate-bounce-slow' : ''}" 
+                 style="top:5%;left:5%" onclick="handleTreeTap()">🌳</div>
+            ${stage === 'tree' ? `<div class="absolute animate-ping text-xl pointer-events-none" style="top:10%;left:12%">👆</div>` : ''}
+            <!-- Bobi at tree -->
+            <div class="absolute text-3xl ${stage==='tree'?'animate-wiggle':''}" style="bottom:12%;left:5%">🐻</div>
+            <div class="absolute text-xs font-black text-green-800 bg-white/70 px-1.5 py-0.5 rounded-full" style="bottom:4%;left:5%">Bobi</div>
+            <!-- Kiki in middle -->
+            <div class="absolute text-3xl ${stage==='kiki'?'animate-bounce-slow':''}" style="bottom:12%;left:40%">🐰</div>
+            <div class="absolute text-xs font-black text-green-800 bg-white/70 px-1.5 py-0.5 rounded-full" style="bottom:4%;left:40%">Kiki</div>
+            <!-- Cici at barn -->
+            <div id="cici-p2" class="absolute text-3xl cursor-pointer ${stage==='cici'?'animate-bounce-slow':''}" 
+                 style="bottom:12%;right:12%" onclick="handleCiciP2Tap()">🐦</div>
+            <div class="absolute text-xs font-black text-green-800 bg-white/70 px-1.5 py-0.5 rounded-full" style="bottom:4%;right:12%">Cici</div>
+            <!-- Apple -->
+            ${gameData.appleActive ? `
+            <div id="apple-drag" class="absolute text-4xl cursor-grab z-20 transition-none" 
+                 style="top:${gameData.applePos.y}%;left:${gameData.applePos.x}%">🍎</div>` : ''}
+            <!-- Progress apples top right -->
+            <div class="absolute top-2 right-2 flex gap-0.5">
+                ${'🍎'.repeat(delivered)}${'⬜'.repeat(applesLeft > 0 ? applesLeft : 0)}
+            </div>
+        </div>
+ 
+        <!-- Estafet steps indicator -->
+        <div class="flex items-center justify-center gap-2 mt-3 bg-white/60 rounded-2xl p-3">
+            <div class="flex items-center gap-1 ${stage==='tree'?'font-black text-green-700':'text-gray-400 font-bold'} text-xs">
+                <span class="text-xl">🐻</span> Goyang
+            </div>
+            <div class="text-gray-400">→</div>
+            <div class="flex items-center gap-1 ${stage==='kiki'?'font-black text-green-700':'text-gray-400 font-bold'} text-xs">
+                <span class="text-xl">🐰</span> Tangkap
+            </div>
+            <div class="text-gray-400">→</div>
+            <div class="flex items-center gap-1 ${stage==='cici'?'font-black text-green-700':'text-gray-400 font-bold'} text-xs">
+                <span class="text-xl">🐦</span> Simpan
+            </div>
+        </div>
+    </div>`;
+}
+ 
+// Phase 2 interactions
+window.handleTreeTap = function() {
+    if (gameData.appleStage !== 'tree') return;
+    playSound('pop');
+    speak("Bobi menggoyangkan pohon! Apel jatuh ke tangan Kiki di tengah jalan!");
+    gameData.appleActive = true;
+    gameData.applePos = { x: 38, y: 55 };
+    gameData.appleStage = 'kiki';
+    drawCoopGame();
+    setTimeout(() => speak("Kiki sudah menangkap apelnya! Geser apel dari Kiki ke Cici yang menunggu di gudang!"), 800);
+};
+ 
+let appleP2Dragging = false, appleP2Offset = { x: 0, y: 0 };
+ 
+window.handlePhase2Touch = function(e) {
+    if (gameData.appleStage !== 'kiki') return;
+    e.preventDefault();
+    const scene = document.getElementById('phase2-scene');
+    if (!scene) return;
+    const pos = getScenePos(e, scene);
+    const ax = gameData.applePos.x, ay = gameData.applePos.y;
+    if (Math.abs(pos.x - ax) < 18 && Math.abs(pos.y - ay) < 20) {
+        appleP2Dragging = true;
+        appleP2Offset = { x: pos.x - ax, y: pos.y - ay };
+    }
+};
+ 
+window.handlePhase2Move = function(e) {
+    if (!appleP2Dragging) return;
+    e.preventDefault();
+    const scene = document.getElementById('phase2-scene');
+    if (!scene) return;
+    const pos = getScenePos(e, scene);
+    const newX = Math.max(0, Math.min(90, pos.x - appleP2Offset.x));
+    const newY = Math.max(0, Math.min(80, pos.y - appleP2Offset.y));
+    gameData.applePos = { x: newX, y: newY };
+    const appleEl = document.getElementById('apple-drag');
+    if (appleEl) { appleEl.style.left = newX+'%'; appleEl.style.top = newY+'%'; }
+    // Cici zone: right side, bottom
+    if (newX >= 68 && newY >= 40) {
+        appleP2Dragging = false;
+        gameData.appleStage = 'cici';
+        gameData.applePos = { x: 72, y: 50 };
+        playSound('coin');
+        speak("Apel sudah sampai ke Cici! Ketuk Cici untuk menyimpan apel ke gudang!");
+        drawCoopGame();
+    }
+};
+ 
+window.handlePhase2End = function() { appleP2Dragging = false; };
+ 
+window.handleCiciP2Tap = function() {
+    if (gameData.appleStage !== 'cici') return;
+    playSound('success');
+    gameData.applesDelivered++;
+    gameData.appleActive = false;
+    gameData.appleStage = 'tree';
+ 
+    if (gameData.applesDelivered >= gameData.totalApples) {
+        createConfetti();
+        speak("Horeee! Semua buah sudah tersimpan di gudang! Kalian tim yang luar biasa!");
+        setTimeout(() => winLevel(3, "Hebat! Kamu dan teman-teman hewan sudah bekerja sama. Pekerjaan yang berat jadi terasa ringan dan menyenangkan jika dilakukan bersama-sama! Kamu anak yang hebat dalam bekerja sama!"), 2000);
+    } else {
+        const left = gameData.totalApples - gameData.applesDelivered;
+        speak(`Satu apel masuk gudang! Masih ada ${left} apel lagi. Ayo ketuk pohonnya!`);
+        drawCoopGame();
+    }
+};
  
 // ===================== STICKERS =====================
 function renderStickers() {
