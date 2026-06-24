@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -119,7 +119,7 @@ const state = {
         responsibility: { stars: 0, unlocked: false, playCount: 0 },
         discipline:     { stars: 0, unlocked: false, playCount: 0 },
         care:           { stars: 0, unlocked: false, playCount: 0 },
-        cooperation:    { stars: 0, unlocked: true, playCount: 0 }
+        cooperation:    { stars: 0, unlocked: false, playCount: 0 }
     },
     stickers: [],
     totalStars: 0,
@@ -446,19 +446,19 @@ function renderMap() {
     worlds.forEach((w, idx) => {
         const isUnlocked = state.progress[w.id].unlocked;
         const stars = state.progress[w.id].stars;
-        const isPlayable = true;
+        const isPlayable = isUnlocked;
         html += `
-        <div class="world-card glass-panel p-4 rounded-3xl flex items-center gap-3 ${isUnlocked && isPlayable ? 'cursor-pointer' : 'opacity-60 grayscale'}"
-             onclick="${isUnlocked && isPlayable ? `changeScreen('play','${w.id}')` : isUnlocked ? `alertCustom('Dunia ini akan segera hadir! 🚧')` : `alertCustom('Selesaikan dunia sebelumnya dulu ya! 🔒')`}">
+        <div class="world-card glass-panel p-4 rounded-3xl flex items-center gap-3 ${isPlayable ? 'cursor-pointer' : 'opacity-60 grayscale cursor-not-allowed'}"
+             onclick="${isPlayable ? `changeScreen('play','${w.id}')` : `alertCustom('Selesaikan dunia sebelumnya dulu ya! 🔒')`}">
             <div class="${w.color} w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner border-2 border-white flex-shrink-0">
-                ${isUnlocked ? w.icon : '🔒'}
+                ${isPlayable ? w.icon : '🔒'}
             </div>
             <div class="flex-1 min-w-0">
                 <h3 class="font-black text-gray-800 text-base leading-tight">${w.name}</h3>
                 <p class="text-xs text-gray-500 leading-snug mt-0.5">${w.desc}</p>
-                ${isUnlocked ? `<div class="mt-1.5 text-lg">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>` : `<p class="text-xs text-gray-400 mt-1 font-bold">🔒 Terkunci</p>`}
+                ${isPlayable ? `<div class="mt-1.5 text-lg">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>` : `<p class="text-xs text-gray-400 mt-1 font-bold">🔒 Terkunci — selesaikan level sebelumnya</p>`}
             </div>
-            ${isUnlocked && isPlayable ? `<div class="text-2xl flex-shrink-0">▶️</div>` : ''}
+            ${isPlayable ? `<div class="text-2xl flex-shrink-0">▶️</div>` : ''}
         </div>`;
     });
  
